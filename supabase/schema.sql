@@ -37,9 +37,9 @@ CREATE INDEX IF NOT EXISTS idx_ventas_fecha   ON ventas(fecha);
 ALTER TABLE cosechas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ventas   ENABLE ROW LEVEL SECURITY;
 
--- Política pública (ajustar si se agrega autenticación)
-CREATE POLICY "Allow all" ON cosechas FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all" ON ventas   FOR ALL USING (true) WITH CHECK (true);
+-- Solo usuarios autenticados pueden acceder
+CREATE POLICY "Authenticated only" ON cosechas FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated only" ON ventas   FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Habilitar Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE cosechas;
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS productos (
 CREATE INDEX IF NOT EXISTS idx_productos_activo ON productos(activo, orden);
 
 ALTER TABLE productos ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all" ON productos FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated only" ON productos FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Seed de productos iniciales
 INSERT INTO productos (nombre, orden) VALUES
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS clientes (
 CREATE INDEX IF NOT EXISTS idx_clientes_activo ON clientes(activo, orden);
 
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all" ON clientes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Authenticated only" ON clientes FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Seed de clientes iniciales
 INSERT INTO clientes (nombre, orden) VALUES

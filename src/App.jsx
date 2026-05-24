@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
 import RegistrosHoy from './components/RegistrosHoy'
+import Login from './components/Login'
 import './App.css'
 
 const TABS = [
@@ -13,6 +14,7 @@ const TABS = [
 ]
 
 export default function App() {
+  const [session, setSession] = useState(undefined)
   const [activeTab, setActiveTab] = useState('cosecha')
   const [cosechas, setCosechas] = useState([])
   const [ventas, setVentas] = useState([])
@@ -20,6 +22,12 @@ export default function App() {
   const [clientes, setClientes] = useState([])
   const [loadingData, setLoadingData] = useState(true)
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session))
+    return () => subscription.unsubscribe()
+  }, [])
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -96,6 +104,9 @@ export default function App() {
     setActiveTab('registros')
   }
 
+  if (session === undefined) return null
+  if (!session) return <Login />
+
   return (
     <div className="app">
       <header className="app-header">
@@ -107,9 +118,14 @@ export default function App() {
               <p className="brand-sub">Sistema Agrícola</p>
             </div>
           </div>
-          <div className="header-nexobit">
-            <span>by</span>
-            <strong>NexoBit</strong>
+          <div className="header-right">
+            <div className="header-nexobit">
+              <span>by</span>
+              <strong>NexoBit</strong>
+            </div>
+            <button className="btn-logout" onClick={() => supabase.auth.signOut()} title="Cerrar sesión">
+              Salir
+            </button>
           </div>
         </div>
       </header>
