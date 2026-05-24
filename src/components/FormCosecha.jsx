@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { PRODUCTOS, UNIDADES } from '../lib/constants'
+import { UNIDADES } from '../lib/constants'
 
 const initialState = {
   producto: '',
@@ -9,7 +9,7 @@ const initialState = {
   notas: '',
 }
 
-export default function FormCosecha({ onSuccess }) {
+export default function FormCosecha({ onSuccess, productos = [] }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -60,7 +60,7 @@ export default function FormCosecha({ onSuccess }) {
           <label>Producto *</label>
           <select name="producto" value={form.producto} onChange={handleChange} required>
             <option value="">Seleccioná un producto</option>
-            {PRODUCTOS.map(p => (
+            {productos.map(p => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>

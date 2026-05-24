@@ -16,10 +16,22 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('cosecha')
   const [cosechas, setCosechas] = useState([])
   const [ventas, setVentas] = useState([])
+  const [productos, setProductos] = useState([])
+  const [clientes, setClientes] = useState([])
   const [loadingData, setLoadingData] = useState(true)
   const [toast, setToast] = useState(null)
 
   const today = new Date().toISOString().split('T')[0]
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('productos').select('nombre').eq('activo', true).order('orden', { ascending: true }),
+      supabase.from('clientes').select('nombre').eq('activo', true).order('orden', { ascending: true }),
+    ]).then(([{ data: p }, { data: c }]) => {
+      setProductos((p || []).map(x => x.nombre))
+      setClientes((c || []).map(x => x.nombre))
+    })
+  }, [])
 
   const fetchData = useCallback(async () => {
     setLoadingData(true)
@@ -104,16 +116,19 @@ export default function App() {
 
       <div className="summary-bar">
         <div className="summary-item">
+          <span className="summary-icon">🌿</span>
           <span className="summary-num">{cosechas.length}</span>
           <span className="summary-label">Cosechas hoy</span>
         </div>
         <div className="summary-divider" />
         <div className="summary-item">
+          <span className="summary-icon">💰</span>
           <span className="summary-num">{ventas.length}</span>
           <span className="summary-label">Ventas hoy</span>
         </div>
         <div className="summary-divider" />
         <div className="summary-item">
+          <span className="summary-icon">📈</span>
           <span className="summary-num">
             ₡{ventas.reduce((s, v) => s + parseFloat(v.total || 0), 0).toLocaleString('es-CR')}
           </span>
@@ -135,19 +150,21 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {activeTab === 'cosecha' && (
-          <FormCosecha onSuccess={handleCosechaSuccess} />
-        )}
-        {activeTab === 'venta' && (
-          <FormVenta onSuccess={handleVentaSuccess} />
-        )}
-        {activeTab === 'registros' && (
-          <RegistrosHoy
-            cosechas={cosechas}
-            ventas={ventas}
-            loading={loadingData}
-          />
-        )}
+        <div key={activeTab} className="tab-content">
+          {activeTab === 'cosecha' && (
+            <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} />
+          )}
+          {activeTab === 'venta' && (
+            <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} />
+          )}
+          {activeTab === 'registros' && (
+            <RegistrosHoy
+              cosechas={cosechas}
+              ventas={ventas}
+              loading={loadingData}
+            />
+          )}
+        </div>
       </main>
 
       {toast && (

@@ -23,8 +23,7 @@ export default function RegistrosHoy({ cosechas, ventas, loading }) {
       Producto: r.producto,
       Cantidad: r.cantidad,
       Unidad: r.unidad,
-      'Tipo Cliente': r.tipo_cliente,
-      'Nombre Cliente': r.nombre_cliente,
+      Cliente: r.nombre_cliente,
       'Precio Unitario': r.precio_unitario,
       Total: r.total,
       Notas: r.notas || '',
@@ -133,11 +132,7 @@ export default function RegistrosHoy({ cosechas, ventas, loading }) {
                       <td className="td-producto">{r.producto}</td>
                       <td className="td-number">{r.cantidad}</td>
                       <td>{r.unidad}</td>
-                      <td>
-                        <span className="cliente-tipo">{r.tipo_cliente}</span>
-                        <br />
-                        <span className="cliente-nombre">{r.nombre_cliente}</span>
-                      </td>
+                      <td className="td-producto">{r.nombre_cliente}</td>
                       <td className="td-number">₡{parseFloat(r.precio_unitario).toLocaleString('es-CR')}</td>
                       <td className="td-total">₡{parseFloat(r.total).toLocaleString('es-CR')}</td>
                       <td className="td-hora">
