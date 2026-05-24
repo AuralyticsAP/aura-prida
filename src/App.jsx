@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import logoPrida from './assets/logo-prida.png'
 import { supabase } from './lib/supabase'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
@@ -88,7 +89,7 @@ export default function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-brand">
-            <div className="brand-logo">P</div>
+            <img src={logoPrida} alt="Prida" className="brand-logo-img" />
             <div>
               <h1 className="brand-title">Prida</h1>
               <p className="brand-sub">Sistema Agrícola</p>
