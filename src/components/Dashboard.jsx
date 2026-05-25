@@ -7,12 +7,12 @@ import {
 import { supabase } from '../lib/supabase'
 import { useCountUp } from '../hooks/useCountUp'
 
-const GOLD    = '#c8a84b'
-const GOLD_DIM = 'rgba(200,168,75,0.18)'
-const BLUE_BAR = '#4a90d9'
-const TEXT_S   = 'rgba(200,215,245,0.55)'
-const GRID_C   = 'rgba(255,255,255,0.06)'
-const CARD_BG  = '#0d1b2e'
+const GOLD      = '#c8a84b'
+const GOLD_DIM  = 'rgba(200,168,75,0.18)'
+const BLUE_BAR  = '#4a90d9'
+const TEXT_S    = 'rgba(200,215,245,0.55)'
+const GRID_C    = 'rgba(255,255,255,0.06)'
+const CARD_BG   = '#0d1b2e'
 const TOOLTIP_BG = 'rgba(8,16,36,0.97)'
 
 const PIE_COLORS = [
@@ -20,12 +20,23 @@ const PIE_COLORS = [
   '#a78bfa', '#fb923c', '#38bdf8', '#f472b6',
 ]
 
+const DIAS_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+
 // ── Demo data ─────────────────────────────────────────────────────────────────
 const DEMO_WEEKLY = [
   { semana: '5 may',  ingresos: 620000 },
   { semana: '12 may', ingresos: 810000 },
   { semana: '19 may', ingresos: 740000 },
   { semana: '26 may', ingresos: 680000 },
+]
+
+const DEMO_DAYS = [
+  { dia: 'Lun', ventas: 520000 },
+  { dia: 'Mar', ventas: 310000 },
+  { dia: 'Mié', ventas: 485000 },
+  { dia: 'Jue', ventas: 275000 },
+  { dia: 'Vie', ventas: 350000 },
+  { dia: 'Sáb', ventas: 210000 },
 ]
 
 const DEMO_PRODUCTOS = [
@@ -49,7 +60,13 @@ const DEMO_CLIENTES = [
   { nombre: 'Cruceros',       total: 35000  },
 ]
 
+const DEMO_STAR = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
+
 const DEMO_KPI = { cosechas: 158, ventas: 94, ingresos: 2850000 }
+
+const DEMO_LOSSES = [
+  { producto: 'Zucchini', cosechado: 320, vendido: 160, perdida: 160, pct: 50 },
+]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function isoDate(d) { return d.toISOString().split('T')[0] }
@@ -72,7 +89,6 @@ function buildWeeklyData(ventas) {
     s.setDate(s.getDate() - i * 7)
     return new Date(s)
   }).reverse()
-
   return weeks.map(wStart => {
     const wEnd = new Date(wStart)
     wEnd.setDate(wEnd.getDate() + 6)
@@ -81,6 +97,15 @@ function buildWeeklyData(ventas) {
       .reduce((s, v) => s + parseFloat(v.total || 0), 0)
     return { semana: weekLabel(wStart), ingresos: total }
   })
+}
+
+function buildDayOfWeekData(ventas) {
+  const totals = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+  ventas.forEach(r => {
+    const day = new Date(r.fecha + 'T12:00:00').getDay()
+    if (day >= 1 && day <= 6) totals[day] += parseFloat(r.total || 0)
+  })
+  return [1, 2, 3, 4, 5, 6].map(d => ({ dia: DIAS_LABEL[d], ventas: Math.round(totals[d]) }))
 }
 
 function buildProductoData(cosechas, ventas) {
@@ -99,6 +124,25 @@ function buildProductoData(cosechas, ventas) {
     .slice(0, 7)
 }
 
+function buildStarProduct(ventas) {
+  const map = {}
+  ventas.forEach(r => {
+    if (!map[r.producto]) map[r.producto] = { vendido: 0, ingresos: 0 }
+    map[r.producto].vendido   += parseFloat(r.cantidad || 0)
+    map[r.producto].ingresos  += parseFloat(r.total    || 0)
+  })
+  const totalKg = Object.values(map).reduce((s, v) => s + v.vendido, 0)
+  const sorted  = Object.entries(map).sort((a, b) => b[1].vendido - a[1].vendido)
+  if (!sorted.length) return null
+  const [name, data] = sorted[0]
+  return {
+    producto: name,
+    vendido:  Math.round(data.vendido),
+    ingresos: Math.round(data.ingresos),
+    pct: totalKg > 0 ? Math.round((data.vendido / totalKg) * 100) : 0,
+  }
+}
+
 function buildClienteData(ventas) {
   const map = {}
   ventas.forEach(r => {
@@ -111,18 +155,23 @@ function buildClienteData(ventas) {
     .slice(0, 8)
 }
 
-function buildAlerts(cosechas, ventas) {
+function buildLossAlerts(cosechas, ventas) {
   const cos = {}, ven = {}
   cosechas.forEach(r => { cos[r.producto] = (cos[r.producto] || 0) + parseFloat(r.cantidad || 0) })
   ventas.forEach(r   => { ven[r.producto] = (ven[r.producto] || 0) + parseFloat(r.cantidad || 0) })
   return Object.entries(cos)
-    .filter(([p, c]) => c > (ven[p] || 0) * 1.25 && c > 10)
-    .map(([producto, cosechado]) => ({
-      producto,
-      cosechado: Math.round(cosechado),
-      vendido: Math.round(ven[producto] || 0),
-    }))
-    .sort((a, b) => (b.cosechado - b.vendido) - (a.cosechado - a.vendido))
+    .filter(([p, c]) => {
+      const v = ven[p] || 0
+      const perdida = c - v
+      return c > 10 && perdida > 0 && (perdida / c) > 0.20
+    })
+    .map(([producto, cosechado]) => {
+      const vendido = Math.round(ven[producto] || 0)
+      const perdida = Math.round(cosechado - vendido)
+      const pct     = Math.round((perdida / cosechado) * 100)
+      return { producto, cosechado: Math.round(cosechado), vendido, perdida, pct }
+    })
+    .sort((a, b) => b.perdida - a.perdida)
 }
 
 // ── Tooltip personalizado ─────────────────────────────────────────────────────
@@ -145,14 +194,26 @@ function DashTooltip({ active, payload, label, isCurrency = false }) {
   )
 }
 
+function DayTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="db-tooltip">
+      <p className="db-tooltip-label">{label}</p>
+      <p className="db-tooltip-row" style={{ color: GOLD }}>
+        <span className="db-tooltip-name">Ventas</span>
+        <span className="db-tooltip-val">₡{Math.round(payload[0].value).toLocaleString('es-CR')}</span>
+      </p>
+    </div>
+  )
+}
+
 // ── KPI card ──────────────────────────────────────────────────────────────────
-function KpiCard({ icon, label, value, isCurrency = false, accent = GOLD, trend }) {
+function KpiCard({ icon, label, value, isCurrency = false, accent = GOLD }) {
   const displayed = useCountUp(value)
   return (
     <div className="db-kpi-card">
       <div className="db-kpi-top">
         <span className="db-kpi-icon">{icon}</span>
-        {trend && <span className={`db-kpi-trend ${trend > 0 ? 'up' : 'down'}`}>{trend > 0 ? '▲' : '▼'} {Math.abs(trend)}%</span>}
       </div>
       <div className="db-kpi-value" style={{ color: accent }}>
         {isCurrency
@@ -165,15 +226,49 @@ function KpiCard({ icon, label, value, isCurrency = false, accent = GOLD, trend 
   )
 }
 
+// ── Producto estrella ─────────────────────────────────────────────────────────
+function StarProductCard({ star }) {
+  const displayed = useCountUp(star.vendido)
+  return (
+    <div className="db-chart-card db-star-card">
+      <div className="db-chart-header">
+        <h3 className="db-chart-title">Producto estrella</h3>
+        <span className="db-chart-sub">Más vendido del mes</span>
+      </div>
+      <div className="db-star-body">
+        <div className="db-star-trophy">⭐</div>
+        <div className="db-star-name">{star.producto}</div>
+        <div className="db-star-kg">
+          <span className="db-star-kg-num">{Math.round(displayed).toLocaleString('es-CR')}</span>
+          <span className="db-star-kg-unit"> kg vendidos</span>
+        </div>
+        <div className="db-star-track-wrap">
+          <div className="db-star-track">
+            <div className="db-star-fill" style={{ width: `${Math.min(star.pct, 100)}%` }} />
+          </div>
+          <span className="db-star-pct">{star.pct}% del total</span>
+        </div>
+        {star.ingresos > 0 && (
+          <div className="db-star-ingresos">
+            ₡{Math.round(star.ingresos).toLocaleString('es-CR')} generados
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [mode, setMode]             = useState('real')
   const [loading, setLoading]       = useState(false)
   const [kpi, setKpi]               = useState({ cosechas: 0, ventas: 0, ingresos: 0 })
   const [weeklyData, setWeeklyData] = useState([])
+  const [dayData, setDayData]       = useState([])
   const [prodData, setProdData]     = useState([])
   const [clientData, setClientData] = useState([])
-  const [alerts, setAlerts]         = useState([])
+  const [starProduct, setStarProduct] = useState(null)
+  const [lossAlerts, setLossAlerts] = useState([])
   const [hasData, setHasData]       = useState(false)
 
   const fetchReal = useCallback(async () => {
@@ -198,9 +293,11 @@ export default function Dashboard() {
 
     setKpi({ cosechas: cosArr.length, ventas: venArr.length, ingresos: totalIngresos })
     setWeeklyData(buildWeeklyData(venW2))
+    setDayData(buildDayOfWeekData(venW2))
     setProdData(buildProductoData(cosW2, venW2))
     setClientData(buildClienteData(venW2))
-    setAlerts(buildAlerts(cosW2, venW2))
+    setStarProduct(buildStarProduct(venArr))
+    setLossAlerts(buildLossAlerts(cosArr, venArr))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
   }, [])
@@ -211,15 +308,18 @@ export default function Dashboard() {
     } else {
       setKpi(DEMO_KPI)
       setWeeklyData(DEMO_WEEKLY)
+      setDayData(DEMO_DAYS)
       setProdData(DEMO_PRODUCTOS)
       setClientData(DEMO_CLIENTES)
-      setAlerts([{ producto: 'Zucchini', cosechado: 320, vendido: 160 }])
+      setStarProduct(DEMO_STAR)
+      setLossAlerts(DEMO_LOSSES)
       setHasData(true)
       setLoading(false)
     }
   }, [mode, fetchReal])
 
   const totalClientes = clientData.reduce((s, r) => s + r.total, 0)
+  const maxDay = dayData.length ? Math.max(...dayData.map(d => d.ventas)) : 1
 
   return (
     <div className="db-root">
@@ -260,6 +360,44 @@ export default function Dashboard() {
             <KpiCard icon="📈" label="Ingresos totales" value={kpi.ingresos} accent="#34d399" isCurrency />
           </div>
 
+          {/* ── Alertas de pérdida (urgente, rojo) ── */}
+          {lossAlerts.length > 0 && (
+            <div className="db-loss-banner">
+              <div className="db-loss-banner-head">
+                <span className="db-loss-pulse" />
+                <span className="db-loss-banner-title">🚨 Riesgo de pérdida detectado</span>
+              </div>
+              {lossAlerts.map((a, i) => (
+                <div key={i} className="db-loss-row">
+                  <div className="db-loss-main">
+                    <span className="db-loss-phrase">
+                      Atención: <strong>{a.perdida} kg de {a.producto}</strong> en riesgo de pérdida
+                    </span>
+                    <span className="db-loss-detail">
+                      {a.pct}% sin vender — {a.vendido} de {a.cosechado} kg vendidos este mes
+                    </span>
+                  </div>
+                  <div className="db-loss-gauge-wrap">
+                    <div className="db-loss-gauge-track">
+                      <div
+                        className="db-loss-gauge-sold"
+                        style={{ width: `${a.cosechado > 0 ? Math.round((a.vendido / a.cosechado) * 100) : 0}%` }}
+                      />
+                      <div
+                        className="db-loss-gauge-lost"
+                        style={{ width: `${a.pct}%`, left: `${a.cosechado > 0 ? Math.round((a.vendido / a.cosechado) * 100) : 0}%` }}
+                      />
+                    </div>
+                    <div className="db-loss-gauge-labels">
+                      <span style={{ color: BLUE_BAR }}>✓ {a.vendido} kg vendidos</span>
+                      <span style={{ color: '#f87171' }}>✗ {a.perdida} kg en riesgo</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* ── Area chart (full width) ── */}
           <div className="db-chart-card db-chart-full">
             <div className="db-chart-header">
@@ -275,25 +413,10 @@ export default function Dashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid stroke={GRID_C} vertical={false} />
-                <XAxis
-                  dataKey="semana"
-                  tick={{ fill: TEXT_S, fontSize: 13, fontWeight: 500 }}
-                  axisLine={false} tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: TEXT_S, fontSize: 12 }}
-                  axisLine={false} tickLine={false}
-                  tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`}
-                  width={64}
-                />
+                <XAxis dataKey="semana" tick={{ fill: TEXT_S, fontSize: 13, fontWeight: 500 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} width={64} />
                 <Tooltip content={<DashTooltip isCurrency />} />
-                <Area
-                  type="monotone"
-                  dataKey="ingresos"
-                  name="Ingresos"
-                  stroke={GOLD}
-                  strokeWidth={3}
-                  fill="url(#areaGold)"
+                <Area type="monotone" dataKey="ingresos" name="Ingresos" stroke={GOLD} strokeWidth={3} fill="url(#areaGold)"
                   dot={{ r: 5, fill: GOLD, stroke: CARD_BG, strokeWidth: 2 }}
                   activeDot={{ r: 7, fill: GOLD, stroke: CARD_BG, strokeWidth: 2 }}
                 />
@@ -301,10 +424,53 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* ── Two-column row ── */}
+          {/* ── Ventas por día | Producto estrella ── */}
           <div className="db-charts-row">
 
-            {/* Bar chart */}
+            {/* Day-of-week chart */}
+            <div className="db-chart-card">
+              <div className="db-chart-header">
+                <h3 className="db-chart-title">Ventas por día</h3>
+                <span className="db-chart-sub">Lunes a sábado (últimas 4 sem.)</span>
+              </div>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dayData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={36}>
+                  <CartesianGrid stroke={GRID_C} vertical={false} />
+                  <XAxis dataKey="dia" tick={{ fill: TEXT_S, fontSize: 13 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} width={58} />
+                  <Tooltip content={<DayTooltip />} />
+                  <Bar dataKey="ventas" name="Ventas" radius={[6, 6, 0, 0]}>
+                    {dayData.map((d, i) => (
+                      <Cell
+                        key={i}
+                        fill={d.ventas === maxDay ? GOLD : 'rgba(200,168,75,0.35)'}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Star product */}
+            {starProduct ? (
+              <StarProductCard star={starProduct} />
+            ) : (
+              <div className="db-chart-card db-star-card">
+                <div className="db-chart-header">
+                  <h3 className="db-chart-title">Producto estrella</h3>
+                  <span className="db-chart-sub">Más vendido del mes</span>
+                </div>
+                <div className="db-star-body">
+                  <p style={{ color: TEXT_S, fontSize: 14 }}>Sin ventas registradas aún.</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── Cosechado vs Vendido | Donut clientes ── */}
+          <div className="db-charts-row">
+
+            {/* Bar chart productos */}
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Cosechado vs Vendido</h3>
@@ -313,28 +479,17 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={prodData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barGap={4} barSize={14}>
                   <CartesianGrid stroke={GRID_C} vertical={false} />
-                  <XAxis
-                    dataKey="producto"
-                    tick={{ fill: TEXT_S, fontSize: 11 }}
-                    axisLine={false} tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: TEXT_S, fontSize: 11 }}
-                    axisLine={false} tickLine={false}
-                    width={40}
-                  />
+                  <XAxis dataKey="producto" tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
                   <Tooltip content={<DashTooltip isCurrency={false} />} />
-                  <Legend
-                    wrapperStyle={{ paddingTop: 14, fontSize: 13 }}
-                    formatter={name => <span style={{ color: TEXT_S }}>{name}</span>}
-                  />
+                  <Legend wrapperStyle={{ paddingTop: 14, fontSize: 13 }} formatter={n => <span style={{ color: TEXT_S }}>{n}</span>} />
                   <Bar dataKey="cosechado" name="Cosechado" fill={GOLD}     radius={[5, 5, 0, 0]} />
                   <Bar dataKey="vendido"   name="Vendido"   fill={BLUE_BAR} radius={[5, 5, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Donut chart */}
+            {/* Donut clientes */}
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Ventas por cliente</h3>
@@ -379,7 +534,6 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
 
-              {/* Leyenda compacta */}
               <div className="db-pie-legend">
                 {clientData.map((d, i) => {
                   const pct = totalClientes > 0 ? Math.round((d.total / totalClientes) * 100) : 0
@@ -395,54 +549,6 @@ export default function Dashboard() {
             </div>
 
           </div>{/* end .db-charts-row */}
-
-          {/* ── Alerts (full width) ── */}
-          {alerts.length > 0 && (
-            <div className="db-alerts-card">
-              <div className="db-alerts-head">
-                <span className="db-alerts-icon">⚠️</span>
-                <div>
-                  <h3 className="db-alerts-title">Alertas de inventario</h3>
-                  <p className="db-alerts-sub">Productos con exceso de cosecha frente a ventas</p>
-                </div>
-              </div>
-              <div className="db-alerts-list">
-                {alerts.map((a, i) => {
-                  const surplus = a.cosechado - a.vendido
-                  const pct = a.vendido > 0 ? Math.round((surplus / a.vendido) * 100) : 100
-                  return (
-                    <div key={i} className="db-alert-row">
-                      <div className="db-alert-left">
-                        <span className="db-alert-product">{a.producto}</span>
-                        <span className="db-alert-desc">
-                          {surplus} kg sin vender ({pct}% de exceso)
-                        </span>
-                      </div>
-                      <div className="db-alert-bars">
-                        <div className="db-alert-bar-wrap">
-                          <span className="db-alert-bar-label">Cosechado</span>
-                          <div className="db-alert-bar-track">
-                            <div className="db-alert-bar-fill gold" style={{ width: '100%' }} />
-                          </div>
-                          <span className="db-alert-bar-val">{a.cosechado} kg</span>
-                        </div>
-                        <div className="db-alert-bar-wrap">
-                          <span className="db-alert-bar-label">Vendido</span>
-                          <div className="db-alert-bar-track">
-                            <div
-                              className="db-alert-bar-fill blue"
-                              style={{ width: `${a.cosechado > 0 ? Math.round((a.vendido / a.cosechado) * 100) : 0}%` }}
-                            />
-                          </div>
-                          <span className="db-alert-bar-val">{a.vendido} kg</span>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
 
         </>
       )}
