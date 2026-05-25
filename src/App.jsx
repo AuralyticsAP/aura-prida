@@ -9,6 +9,7 @@ import FormVenta from './components/FormVenta'
 import RegistrosHoy from './components/RegistrosHoy'
 import Proveedores from './components/Proveedores'
 import Usuarios from './components/Usuarios'
+import GestionProductos from './components/GestionProductos'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
 import './App.css'
@@ -19,6 +20,7 @@ const ALL_TABS = [
   { id: 'registros',   label: 'Registros',   icon: '📋' },
   { id: 'dashboard',   label: 'Dashboard',   icon: '📊' },
   { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
+  { id: 'catalogos',   label: 'Catálogos',   icon: '🥬', adminOnly: true },
   { id: 'usuarios',    label: 'Usuarios',    icon: '👥', adminOnly: true },
 ]
 
@@ -283,6 +285,9 @@ export default function App() {
                   canArchive={canArchive}
                   canDelete={canDelete}
                 />
+              )}
+              {activeTab === 'catalogos' && isAdmin && (
+                <GestionProductos showToast={showToast} />
               )}
               {activeTab === 'usuarios' && isAdmin && (
                 <Usuarios session={session} showToast={showToast} />

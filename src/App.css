@@ -1511,6 +1511,65 @@ body {
 }
 .tab-nav::-webkit-scrollbar { display: none; }
 
+/* ===== GESTIÓN DE PRODUCTOS ===== */
+.gp-section { display: flex; flex-direction: column; gap: 16px; }
+
+.gp-table-card { padding: 0; overflow: hidden; }
+
+.gp-table th { white-space: nowrap; }
+
+.gp-th-cost  { width: 200px; }
+.gp-th-order { width: 80px; text-align: center; }
+
+.gp-inline-input {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  width: 100%;
+  min-width: 0;
+}
+.gp-inline-input:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.gp-input-cost  { max-width: 130px; }
+.gp-input-order { max-width: 70px; }
+
+.gp-costo-chip {
+  display: inline-block;
+  background: rgba(196,160,18,0.12);
+  border: 1px solid rgba(196,160,18,0.25);
+  color: var(--gold);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.gp-costo-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.gp-add-card  { padding: 24px; }
+.gp-add-title { font-size: 16px; font-weight: 700; color: var(--text-primary); margin-bottom: 16px; }
+
+.gp-add-form  { display: flex; flex-direction: column; gap: 14px; }
+
+.gp-add-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 480px) {
+  .gp-add-row { grid-template-columns: 1fr; }
+}
+
 /* ===== DASHBOARD ===== */
 .db-root {
   display: flex;
