@@ -1570,6 +1570,93 @@ body {
   .gp-add-row { grid-template-columns: 1fr; }
 }
 
+/* ── Desktop/mobile layout toggle ── */
+.gp-desktop-only { display: block; }
+.gp-mobile-cards  { display: none; }
+
+@media (max-width: 640px) {
+  /* Hide table, show cards */
+  .gp-desktop-only { display: none !important; }
+  .gp-table-card   { overflow: visible; }
+
+  .gp-mobile-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+  }
+}
+
+/* ── Mobile product card ── */
+.gp-mobile-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  transition: background 0.18s;
+}
+.gp-mobile-card:hover { background: rgba(255,255,255,0.07); }
+
+/* When editing, the card becomes a column form */
+.gp-mobile-card--editing {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  border-color: rgba(196,160,18,0.4);
+}
+
+.gp-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gp-card-nombre {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gp-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.gp-card-orden {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 2px 9px;
+  letter-spacing: 0.3px;
+}
+
+/* Edit form inside card */
+.gp-card-edit-row {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 10px;
+}
+
+.gp-card-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 /* ===== DASHBOARD ===== */
 .db-root {
   display: flex;
