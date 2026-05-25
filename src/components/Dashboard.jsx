@@ -10,6 +10,7 @@ import { useCountUp } from '../hooks/useCountUp'
 const GOLD      = '#c8a84b'
 const GOLD_DIM  = 'rgba(200,168,75,0.18)'
 const BLUE_BAR  = '#4a90d9'
+const GREEN_VAL = '#34d399'
 const TEXT_S    = 'rgba(200,215,245,0.55)'
 const GRID_C    = 'rgba(255,255,255,0.06)'
 const CARD_BG   = '#0d1b2e'
@@ -60,12 +61,41 @@ const DEMO_CLIENTES = [
   { nombre: 'Cruceros',       total: 35000  },
 ]
 
-const DEMO_STAR = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
+const DEMO_STAR   = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
+const DEMO_KPI    = { cosechas: 158, ventas: 94, ingresos: 2850000 }
+const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 320, vendido: 160, perdida: 160, pct: 50 }]
 
-const DEMO_KPI = { cosechas: 158, ventas: 94, ingresos: 2850000 }
-
-const DEMO_LOSSES = [
-  { producto: 'Zucchini', cosechado: 320, vendido: 160, perdida: 160, pct: 50 },
+const DEMO_RENT = [
+  {
+    producto: 'Zanahoria',
+    costoPropio: 800,
+    costoProveedor: 500,
+    mejorProveedor: 'Dist. Agro Sur',
+    precioVenta: 1100,
+    gananciaPropia: 300,
+    gananciaCompra: 600,
+    recomendacion: 'comprar',
+  },
+  {
+    producto: 'Lechuga',
+    costoPropio: 300,
+    costoProveedor: 450,
+    mejorProveedor: 'Semillas CR',
+    precioVenta: 900,
+    gananciaPropia: 600,
+    gananciaCompra: 450,
+    recomendacion: 'sembrar',
+  },
+  {
+    producto: 'Tomate',
+    costoPropio: 600,
+    costoProveedor: 580,
+    mejorProveedor: 'Agro Tico',
+    precioVenta: 1250,
+    gananciaPropia: 650,
+    gananciaCompra: 670,
+    recomendacion: 'indiferente',
+  },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -128,8 +158,8 @@ function buildStarProduct(ventas) {
   const map = {}
   ventas.forEach(r => {
     if (!map[r.producto]) map[r.producto] = { vendido: 0, ingresos: 0 }
-    map[r.producto].vendido   += parseFloat(r.cantidad || 0)
-    map[r.producto].ingresos  += parseFloat(r.total    || 0)
+    map[r.producto].vendido  += parseFloat(r.cantidad || 0)
+    map[r.producto].ingresos += parseFloat(r.total    || 0)
   })
   const totalKg = Object.values(map).reduce((s, v) => s + v.vendido, 0)
   const sorted  = Object.entries(map).sort((a, b) => b[1].vendido - a[1].vendido)
@@ -174,7 +204,76 @@ function buildLossAlerts(cosechas, ventas) {
     .sort((a, b) => b.perdida - a.perdida)
 }
 
-// ── Tooltip personalizado ─────────────────────────────────────────────────────
+function buildRentabilidad(prodsCost, ppData, provMap, ventas) {
+  // Mapa de mejor precio de proveedor por nombre de producto (case-insensitive)
+  const bestProv = {}
+  ppData.forEach(item => {
+    const provNombre = provMap[item.proveedor_id]
+    if (!provNombre) return
+    const key = item.nombre.toLowerCase().trim()
+    if (!bestProv[key] || parseFloat(item.precio) < bestProv[key].precio) {
+      bestProv[key] = { precio: parseFloat(item.precio), proveedor: provNombre }
+    }
+  })
+
+  // Mapa de precio de venta promedio por producto
+  const ventaMap = {}
+  ventas.forEach(v => {
+    const key = v.producto.toLowerCase().trim()
+    if (!ventaMap[key]) ventaMap[key] = { sum: 0, count: 0 }
+    ventaMap[key].sum   += parseFloat(v.precio_unitario || 0)
+    ventaMap[key].count += 1
+  })
+
+  return prodsCost
+    .filter(p => p.costo_produccion != null)
+    .map(prod => {
+      const key         = prod.nombre.toLowerCase().trim()
+      const ventaEntry  = ventaMap[key]
+      const precioVenta = ventaEntry && ventaEntry.count > 0
+        ? ventaEntry.sum / ventaEntry.count
+        : null
+
+      const costoPropio     = parseFloat(prod.costo_produccion)
+      const provEntry       = bestProv[key] || null
+      const costoProveedor  = provEntry ? provEntry.precio : null
+      const mejorProveedor  = provEntry ? provEntry.proveedor : null
+
+      const gananciaPropia = precioVenta != null ? precioVenta - costoPropio : null
+      const gananciaCompra = precioVenta != null && costoProveedor != null
+        ? precioVenta - costoProveedor
+        : null
+
+      let recomendacion = 'sembrar'
+      if (gananciaPropia != null && gananciaCompra != null) {
+        const diff      = gananciaCompra - gananciaPropia
+        const threshold = Math.max(Math.abs(gananciaPropia) * 0.10, 50)
+        if      (diff >  threshold) recomendacion = 'comprar'
+        else if (diff < -threshold) recomendacion = 'sembrar'
+        else                        recomendacion = 'indiferente'
+      } else if (gananciaPropia == null && gananciaCompra != null) {
+        recomendacion = 'comprar'
+      }
+
+      return {
+        producto: prod.nombre,
+        costoPropio,
+        costoProveedor,
+        mejorProveedor,
+        precioVenta:    precioVenta    != null ? Math.round(precioVenta)    : null,
+        gananciaPropia: gananciaPropia != null ? Math.round(gananciaPropia) : null,
+        gananciaCompra: gananciaCompra != null ? Math.round(gananciaCompra) : null,
+        recomendacion,
+      }
+    })
+    .filter(r => r.gananciaPropia != null || r.gananciaCompra != null)
+    .sort((a, b) => {
+      const order = { comprar: 0, indiferente: 1, sembrar: 2 }
+      return order[a.recomendacion] - order[b.recomendacion]
+    })
+}
+
+// ── Tooltips ──────────────────────────────────────────────────────────────────
 function DashTooltip({ active, payload, label, isCurrency = false }) {
   if (!active || !payload?.length) return null
   return (
@@ -258,18 +357,113 @@ function StarProductCard({ star }) {
   )
 }
 
+// ── Rentabilidad section ──────────────────────────────────────────────────────
+const RENT_LABEL = {
+  sembrar:      { text: '🌱 Conviene sembrar',           cls: 'rent-sembrar'      },
+  comprar:      { text: '🛒 Conviene comprar',           cls: 'rent-comprar'      },
+  indiferente:  { text: '⚖️ Indiferente',               cls: 'rent-indiferente'  },
+}
+
+function fmt(n) {
+  if (n == null) return '—'
+  return `₡${Math.round(n).toLocaleString('es-CR')}`
+}
+
+function RentabilidadSection({ data }) {
+  const comprarAlerts = data.filter(r => r.recomendacion === 'comprar' && r.mejorProveedor)
+
+  return (
+    <div className="db-rent-section">
+      {/* Header */}
+      <div className="db-chart-header" style={{ marginBottom: 0 }}>
+        <h3 className="db-chart-title">Análisis de Rentabilidad</h3>
+        <span className="db-chart-sub">Producción propia vs compra a proveedores</span>
+      </div>
+
+      {/* Alertas doradas: conviene comprar */}
+      {comprarAlerts.length > 0 && (
+        <div className="db-rent-alerts">
+          {comprarAlerts.map((r, i) => (
+            <div key={i} className="db-rent-alert-row">
+              <span className="db-rent-alert-bulb">💡</span>
+              <p className="db-rent-alert-text">
+                Considere comprarle <strong>{r.producto}</strong> a{' '}
+                <strong>{r.mejorProveedor}</strong> en vez de sembrarlo —{' '}
+                ahorra{' '}
+                <strong style={{ color: GREEN_VAL }}>
+                  ₡{Math.abs((r.gananciaCompra ?? 0) - (r.gananciaPropia ?? 0)).toLocaleString('es-CR')}/kg
+                </strong>{' '}
+                en ganancia.
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabla */}
+      <div className="db-rent-table-wrap">
+        <table className="db-rent-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th className="num">Costo propio<br/><small>₡/kg</small></th>
+              <th className="num">Costo proveedor<br/><small>₡/kg</small></th>
+              <th className="num">Precio venta<br/><small>₡/kg prom.</small></th>
+              <th className="num">Ganancia propia<br/><small>₡/kg</small></th>
+              <th className="num">Ganancia compra<br/><small>₡/kg</small></th>
+              <th>Recomendación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((r, i) => {
+              const rec = RENT_LABEL[r.recomendacion]
+              return (
+                <tr key={i} className={`rent-row-${r.recomendacion}`}>
+                  <td className="db-rent-prod">{r.producto}</td>
+                  <td className="num">{fmt(r.costoPropio)}</td>
+                  <td className="num">
+                    {r.costoProveedor != null
+                      ? <>{fmt(r.costoProveedor)}<br/><small className="rent-prov-name">{r.mejorProveedor}</small></>
+                      : <span className="rent-nd">Sin datos</span>}
+                  </td>
+                  <td className="num">{fmt(r.precioVenta)}</td>
+                  <td className={`num rent-gan ${r.gananciaPropia != null && r.gananciaPropia < 0 ? 'negative' : ''}`}>
+                    {fmt(r.gananciaPropia)}
+                  </td>
+                  <td className={`num rent-gan ${r.gananciaCompra != null && r.gananciaCompra < 0 ? 'negative' : ''}`}>
+                    {fmt(r.gananciaCompra)}
+                  </td>
+                  <td>
+                    <span className={`rent-badge ${rec.cls}`}>{rec.text}</span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="db-rent-note">
+        * Lógica: si la diferencia de ganancia entre opciones es menor al 10%, se considera indiferente.
+        Los costos de producción se configuran en la tabla de Productos de Supabase.
+      </p>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const [mode, setMode]             = useState('real')
-  const [loading, setLoading]       = useState(false)
-  const [kpi, setKpi]               = useState({ cosechas: 0, ventas: 0, ingresos: 0 })
-  const [weeklyData, setWeeklyData] = useState([])
-  const [dayData, setDayData]       = useState([])
-  const [prodData, setProdData]     = useState([])
-  const [clientData, setClientData] = useState([])
+  const [mode, setMode]               = useState('real')
+  const [loading, setLoading]         = useState(false)
+  const [kpi, setKpi]                 = useState({ cosechas: 0, ventas: 0, ingresos: 0 })
+  const [weeklyData, setWeeklyData]   = useState([])
+  const [dayData, setDayData]         = useState([])
+  const [prodData, setProdData]       = useState([])
+  const [clientData, setClientData]   = useState([])
   const [starProduct, setStarProduct] = useState(null)
-  const [lossAlerts, setLossAlerts] = useState([])
-  const [hasData, setHasData]       = useState(false)
+  const [lossAlerts, setLossAlerts]   = useState([])
+  const [rentData, setRentData]       = useState([])
+  const [hasData, setHasData]         = useState(false)
 
   const fetchReal = useCallback(async () => {
     setLoading(true)
@@ -281,15 +475,25 @@ export default function Dashboard() {
     fourW.setDate(fourW.getDate() - 28)
     const fromW    = isoDate(fourW)
 
-    const [{ data: c }, { data: v }, { data: cW }, { data: vW }] = await Promise.all([
+    const [
+      { data: c }, { data: v }, { data: cW }, { data: vW },
+      { data: prodsCost }, { data: ppData }, { data: provsActive },
+    ] = await Promise.all([
       supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to),
-      supabase.from('ventas').select('total,cantidad,producto,nombre_cliente').eq('estado','activo').gte('fecha',from).lte('fecha',to),
+      supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to),
       supabase.from('cosechas').select('fecha,cantidad,producto').eq('estado','activo').gte('fecha',fromW).lte('fecha',to),
       supabase.from('ventas').select('fecha,total,cantidad,producto,nombre_cliente').eq('estado','activo').gte('fecha',fromW).lte('fecha',to),
+      supabase.from('productos').select('nombre,costo_produccion').eq('activo',true).not('costo_produccion','is',null),
+      supabase.from('proveedor_productos').select('nombre,precio,proveedor_id'),
+      supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
     ])
 
     const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || []
     const totalIngresos = venArr.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+
+    // Build proveedor id→nombre map
+    const provMap = {}
+    ;(provsActive || []).forEach(p => { provMap[p.id] = p.nombre })
 
     setKpi({ cosechas: cosArr.length, ventas: venArr.length, ingresos: totalIngresos })
     setWeeklyData(buildWeeklyData(venW2))
@@ -298,6 +502,7 @@ export default function Dashboard() {
     setClientData(buildClienteData(venW2))
     setStarProduct(buildStarProduct(venArr))
     setLossAlerts(buildLossAlerts(cosArr, venArr))
+    setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
   }, [])
@@ -313,6 +518,7 @@ export default function Dashboard() {
       setClientData(DEMO_CLIENTES)
       setStarProduct(DEMO_STAR)
       setLossAlerts(DEMO_LOSSES)
+      setRentData(DEMO_RENT)
       setHasData(true)
       setLoading(false)
     }
@@ -357,7 +563,7 @@ export default function Dashboard() {
           <div className="db-kpi-grid">
             <KpiCard icon="🌿" label="Cosechas del mes" value={kpi.cosechas} accent={GOLD} />
             <KpiCard icon="💰" label="Ventas del mes"   value={kpi.ventas}   accent={BLUE_BAR} />
-            <KpiCard icon="📈" label="Ingresos totales" value={kpi.ingresos} accent="#34d399" isCurrency />
+            <KpiCard icon="📈" label="Ingresos totales" value={kpi.ingresos} accent={GREEN_VAL} isCurrency />
           </div>
 
           {/* ── Alertas de pérdida (urgente, rojo) ── */}
@@ -426,8 +632,6 @@ export default function Dashboard() {
 
           {/* ── Ventas por día | Producto estrella ── */}
           <div className="db-charts-row">
-
-            {/* Day-of-week chart */}
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Ventas por día</h3>
@@ -441,17 +645,13 @@ export default function Dashboard() {
                   <Tooltip content={<DayTooltip />} />
                   <Bar dataKey="ventas" name="Ventas" radius={[6, 6, 0, 0]}>
                     {dayData.map((d, i) => (
-                      <Cell
-                        key={i}
-                        fill={d.ventas === maxDay ? GOLD : 'rgba(200,168,75,0.35)'}
-                      />
+                      <Cell key={i} fill={d.ventas === maxDay ? GOLD : 'rgba(200,168,75,0.35)'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
-            {/* Star product */}
             {starProduct ? (
               <StarProductCard star={starProduct} />
             ) : (
@@ -469,8 +669,6 @@ export default function Dashboard() {
 
           {/* ── Cosechado vs Vendido | Donut clientes ── */}
           <div className="db-charts-row">
-
-            {/* Bar chart productos */}
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Cosechado vs Vendido</h3>
@@ -489,7 +687,6 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
 
-            {/* Donut clientes */}
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Ventas por cliente</h3>
@@ -498,14 +695,9 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
-                    data={clientData}
-                    dataKey="total"
-                    nameKey="nombre"
-                    innerRadius="48%"
-                    outerRadius="75%"
-                    paddingAngle={3}
-                    startAngle={90}
-                    endAngle={-270}
+                    data={clientData} dataKey="total" nameKey="nombre"
+                    innerRadius="48%" outerRadius="75%" paddingAngle={3}
+                    startAngle={90} endAngle={-270}
                   >
                     {clientData.map((_, i) => (
                       <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
@@ -528,12 +720,10 @@ export default function Dashboard() {
                   <Tooltip
                     formatter={(val, name) => [`₡${Math.round(val).toLocaleString('es-CR')}`, name]}
                     contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
-                    itemStyle={{ color: '#e8edf8' }}
-                    labelStyle={{ color: TEXT_S }}
+                    itemStyle={{ color: '#e8edf8' }} labelStyle={{ color: TEXT_S }}
                   />
                 </PieChart>
               </ResponsiveContainer>
-
               <div className="db-pie-legend">
                 {clientData.map((d, i) => {
                   const pct = totalClientes > 0 ? Math.round((d.total / totalClientes) * 100) : 0
@@ -547,8 +737,14 @@ export default function Dashboard() {
                 })}
               </div>
             </div>
+          </div>
 
-          </div>{/* end .db-charts-row */}
+          {/* ── Rentabilidad ── */}
+          {rentData.length > 0 && (
+            <div className="db-chart-card db-chart-full">
+              <RentabilidadSection data={rentData} />
+            </div>
+          )}
 
         </>
       )}

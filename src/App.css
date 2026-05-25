@@ -2065,6 +2065,135 @@ body {
   border-radius: 99px;
 }
 
+/* ── Rentabilidad ── */
+.db-rent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Alertas doradas */
+.db-rent-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.db-rent-alert-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(200,168,75,0.08);
+  border: 1.5px solid rgba(200,168,75,0.35);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.db-rent-alert-bulb {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.db-rent-alert-text {
+  font-size: 14px;
+  color: rgba(244,246,252,0.88);
+  line-height: 1.55;
+}
+.db-rent-alert-text strong { color: #c8a84b; }
+
+/* Tabla */
+.db-rent-table-wrap {
+  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.db-rent-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 680px;
+}
+
+.db-rent-table thead tr {
+  background: rgba(255,255,255,0.04);
+}
+
+.db-rent-table th {
+  padding: 13px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: rgba(200,215,245,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  white-space: nowrap;
+}
+.db-rent-table th.num { text-align: right; }
+
+.db-rent-table td {
+  padding: 13px 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  vertical-align: middle;
+}
+.db-rent-table td.num   { text-align: right; font-variant-numeric: tabular-nums; }
+.db-rent-table tbody tr:last-child td { border-bottom: none; }
+
+/* Row tinting by recommendation */
+.rent-row-sembrar    { background: rgba(52,211,153,0.05); }
+.rent-row-comprar    { background: rgba(74,144,217,0.06); }
+.rent-row-indiferente{ background: transparent; }
+
+.rent-row-sembrar:hover    { background: rgba(52,211,153,0.1); }
+.rent-row-comprar:hover    { background: rgba(74,144,217,0.1); }
+.rent-row-indiferente:hover{ background: rgba(255,255,255,0.03); }
+
+.db-rent-prod {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.rent-prov-name {
+  font-size: 11px;
+  color: rgba(200,215,245,0.5);
+  display: block;
+  margin-top: 2px;
+}
+
+.rent-nd {
+  font-size: 12px;
+  color: rgba(200,215,245,0.35);
+  font-style: italic;
+}
+
+.rent-gan          { font-weight: 700; color: #34d399; }
+.rent-gan.negative { color: #f87171; }
+
+/* Badges */
+.rent-badge {
+  display: inline-block;
+  padding: 5px 11px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rent-sembrar     { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+.rent-comprar     { background: rgba(74,144,217,0.15); color: #60a5fa; border: 1px solid rgba(74,144,217,0.3); }
+.rent-indiferente { background: rgba(255,255,255,0.07); color: rgba(200,215,245,0.6); border: 1px solid rgba(255,255,255,0.1); }
+
+.db-rent-note {
+  font-size: 11px;
+  color: rgba(200,215,245,0.35);
+  line-height: 1.5;
+  padding-top: 4px;
+}
+
 /* ── Mobile responsive ── */
 @media (max-width: 640px) {
   .db-kpi-grid    { grid-template-columns: 1fr 1fr; }
@@ -2075,4 +2204,6 @@ body {
   .db-loss-row    { flex-direction: column; }
   .db-star-kg-num { font-size: 28px; }
   .db-star-trophy { font-size: 44px; }
+  .db-rent-table  { font-size: 12px; }
+  .db-rent-table th, .db-rent-table td { padding: 10px 10px; }
 }
