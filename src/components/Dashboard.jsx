@@ -753,15 +753,15 @@ export default function Dashboard() {
                   <span className="db-rent-empty-icon">⚖️</span>
                   <p className="db-rent-empty-title">Sin datos de costo de producción</p>
                   <p className="db-rent-empty-desc">
-                    Para activar este análisis, ejecuta el siguiente SQL en Supabase y luego
-                    llena el campo <code>costo_produccion</code> para cada producto:
+                    Para activar este análisis, ingresá el costo de producción (₡/kg)
+                    de cada cultivo desde el catálogo de productos.
                   </p>
                   <div className="db-rent-code">
-                    ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo_produccion NUMERIC(10,2);
+                    🥬 Tab Catálogos → seleccionar producto → ✏️ Editar → Costo de producción
                   </div>
                   <p className="db-rent-empty-hint">
-                    Luego ve a <strong>Table Editor → productos</strong> y agrega el costo
-                    de producción (₡/kg) para cada cultivo. El análisis aparecerá aquí automáticamente.
+                    Solo los <strong>admins</strong> pueden editar el catálogo.
+                    El análisis aparecerá aquí automáticamente en cuanto haya al menos un costo cargado.
                   </p>
                 </div>
               </div>

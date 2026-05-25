@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
-const emptyAdd = { nombre: '', costo_produccion: '', orden: '' }
+const emptyAdd = { nombre: '', costo_produccion: '' }
 
 export default function GestionProductos({ showToast }) {
   const [productos, setProductos]   = useState([])
@@ -40,7 +40,7 @@ export default function GestionProductos({ showToast }) {
     const { error } = await supabase.from('productos').insert([{
       nombre,
       costo_produccion: addForm.costo_produccion ? parseFloat(addForm.costo_produccion) : null,
-      orden:            addForm.orden ? parseInt(addForm.orden) : maxOrden + 1,
+      orden:            maxOrden + 1,
       activo:           true,
     }])
     setSaving(false)
@@ -127,28 +127,16 @@ export default function GestionProductos({ showToast }) {
                 required
               />
             </div>
-            <div className="gp-add-row">
-              <div className="form-group">
-                <label>Costo de producción (₡/kg)</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={addForm.costo_produccion}
-                  onChange={e => setAddForm(p => ({ ...p, costo_produccion: e.target.value }))}
-                  placeholder="Ej: 350"
-                />
-              </div>
-              <div className="form-group">
-                <label>Orden en listas</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={addForm.orden}
-                  onChange={e => setAddForm(p => ({ ...p, orden: e.target.value }))}
-                  placeholder="Auto"
-                />
-              </div>
+            <div className="form-group">
+              <label>Costo de producción (₡/kg) — opcional</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={addForm.costo_produccion}
+                onChange={e => setAddForm(p => ({ ...p, costo_produccion: e.target.value }))}
+                placeholder="Ej: 350"
+              />
             </div>
             <div className="form-actions">
               <button type="button" className="btn-cancel" onClick={() => { setShowAdd(false); setAddForm(emptyAdd) }}>
@@ -173,7 +161,7 @@ export default function GestionProductos({ showToast }) {
                 <tr>
                   <th>Producto</th>
                   <th className="gp-th-cost">Costo producción (₡/kg)</th>
-                  <th className="gp-th-order">Orden</th>
+                  <th className="gp-th-order" title="Posición en los dropdowns de Cosecha y Venta">Orden en lista</th>
                   <th></th>
                 </tr>
               </thead>
