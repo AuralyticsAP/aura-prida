@@ -79,6 +79,19 @@ ALTER PUBLICATION supabase_realtime ADD TABLE ventas;
 ALTER PUBLICATION supabase_realtime ADD TABLE proveedores;
 
 -- =============================================
+-- Migración: Sistema de archivado
+-- Ejecutar en Supabase SQL Editor
+-- =============================================
+
+ALTER TABLE cosechas    ADD COLUMN IF NOT EXISTS estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'archivado'));
+ALTER TABLE ventas      ADD COLUMN IF NOT EXISTS estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'archivado'));
+ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS estado TEXT NOT NULL DEFAULT 'activo' CHECK (estado IN ('activo', 'archivado'));
+
+CREATE INDEX IF NOT EXISTS idx_cosechas_estado    ON cosechas(estado);
+CREATE INDEX IF NOT EXISTS idx_ventas_estado      ON ventas(estado);
+CREATE INDEX IF NOT EXISTS idx_proveedores_estado ON proveedores(estado);
+
+-- =============================================
 -- Tabla de productos (lista dinámica)
 -- =============================================
 CREATE TABLE IF NOT EXISTS productos (

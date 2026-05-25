@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { UNIDADES_PROVEEDOR } from '../lib/constants'
+import ConfirmModal from './ConfirmModal'
 
 const emptyProd = { nombre: '', precio: '', unidad: 'kg' }
 
-export default function ProveedorDetalle({ proveedor, session, showToast, onBack, onEdit, onDeleted }) {
+export default function ProveedorDetalle({ proveedor, session, showToast, onBack, onEdit, onDeleted, onArchived }) {
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newProd, setNewProd] = useState(emptyProd)
   const [saving, setSaving] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmArchive, setConfirmArchive] = useState(false)
 
   const fetchProductos = async () => {
     setLoading(true)
@@ -51,6 +53,13 @@ export default function ProveedorDetalle({ proveedor, session, showToast, onBack
     showToast('Producto eliminado')
   }
 
+  const handleArchiveProveedor = async () => {
+    const { error } = await supabase.from('proveedores').update({ estado: 'archivado' }).eq('id', proveedor.id)
+    if (error) { showToast('Error al archivar', 'error'); return }
+    setConfirmArchive(false)
+    onArchived()
+  }
+
   const handleDeleteProveedor = async () => {
     const { error } = await supabase.from('proveedores').delete().eq('id', proveedor.id)
     if (error) { showToast('Error al eliminar proveedor', 'error'); return }
@@ -63,6 +72,7 @@ export default function ProveedorDetalle({ proveedor, session, showToast, onBack
         <button className="btn-back" onClick={onBack}>← Volver</button>
         <div className="detalle-actions">
           <button className="btn-export" onClick={onEdit}>Editar</button>
+          <button className="btn-archive-sm" onClick={() => setConfirmArchive(true)}>📦 Archivar</button>
           <button className="btn-danger-sm" onClick={() => setConfirmDelete(true)}>Eliminar</button>
         </div>
       </div>
@@ -158,16 +168,27 @@ export default function ProveedorDetalle({ proveedor, session, showToast, onBack
         )}
       </div>
 
-      {confirmDelete && (
-        <div className="confirm-overlay">
-          <div className="confirm-box">
-            <p>¿Eliminar a <strong>{proveedor.nombre}</strong> y todos sus productos?</p>
+      {/* Modal archivar (1 paso — es reversible) */}
+      {confirmArchive && (
+        <div className="confirm-overlay" onClick={() => setConfirmArchive(false)}>
+          <div className="confirm-box confirm-box-archive" onClick={e => e.stopPropagation()}>
+            <div className="confirm-icon-wrap">📦</div>
+            <p>¿Archivar a <strong>{proveedor.nombre}</strong>?<br/>Podrás restaurarlo desde "Archivados".</p>
             <div className="confirm-actions">
-              <button className="btn-export" onClick={() => setConfirmDelete(false)}>Cancelar</button>
-              <button className="btn-danger" onClick={handleDeleteProveedor}>Sí, eliminar</button>
+              <button className="btn-export" onClick={() => setConfirmArchive(false)}>Cancelar</button>
+              <button className="btn-archive" onClick={handleArchiveProveedor}>Sí, archivar</button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal eliminar (2 pasos) */}
+      {confirmDelete && (
+        <ConfirmModal
+          message={`¿Eliminar a "${proveedor.nombre}" y todos sus productos permanentemente?`}
+          onConfirm={handleDeleteProveedor}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
     </div>
   )
