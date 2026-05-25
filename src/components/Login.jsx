@@ -60,7 +60,7 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="login-footer">by <strong>NexoBit</strong></p>
+        <p className="login-footer">by <strong>AuralyticsAP</strong></p>
       </div>
     </div>
   )

@@ -4,13 +4,15 @@ import { supabase } from './lib/supabase'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
 import RegistrosHoy from './components/RegistrosHoy'
+import Proveedores from './components/Proveedores'
 import Login from './components/Login'
 import './App.css'
 
 const TABS = [
-  { id: 'cosecha', label: 'Cosecha', icon: '🌿' },
-  { id: 'venta', label: 'Venta', icon: '💰' },
-  { id: 'registros', label: 'Registros', icon: '📋' },
+  { id: 'cosecha',     label: 'Cosecha',     icon: '🌿' },
+  { id: 'venta',       label: 'Venta',       icon: '💰' },
+  { id: 'registros',   label: 'Registros',   icon: '📋' },
+  { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
 ]
 
 export default function App() {
@@ -121,7 +123,7 @@ export default function App() {
           <div className="header-right">
             <div className="header-nexobit">
               <span>by</span>
-              <strong>NexoBit</strong>
+              <strong>AuralyticsAP</strong>
             </div>
             <button className="btn-logout" onClick={() => supabase.auth.signOut()} title="Cerrar sesión">
               Salir
@@ -180,6 +182,9 @@ export default function App() {
               loading={loadingData}
             />
           )}
+          {activeTab === 'proveedores' && (
+            <Proveedores session={session} showToast={showToast} />
+          )}
         </div>
       </main>
 
@@ -190,7 +195,7 @@ export default function App() {
       )}
 
       <footer className="app-footer">
-        <p>Prida © {new Date().getFullYear()} · Desarrollado por <strong>NexoBit</strong></p>
+        <p>Prida © {new Date().getFullYear()} · Desarrollado por <strong>AuralyticsAP</strong></p>
       </footer>
     </div>
   )

@@ -7,3 +7,11 @@ export const UNIDADES = [
   'atado',
   'libra',
 ]
+
+export const UNIDADES_PROVEEDOR = [
+  'kg',
+  'unidad',
+  'rollo',
+  'tamuga',
+  'caja',
+]
