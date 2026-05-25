@@ -9,7 +9,7 @@ const initialState = {
   notas: '',
 }
 
-export default function FormCosecha({ onSuccess, productos = [] }) {
+export default function FormCosecha({ onSuccess, productos = [], session }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -35,6 +35,7 @@ export default function FormCosecha({ onSuccess, productos = [] }) {
       unidad: form.unidad,
       notas: form.notas || null,
       fecha: new Date().toISOString().split('T')[0],
+      user_id: session.user.id,
     }])
 
     setLoading(false)

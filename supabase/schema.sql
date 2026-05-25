@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS cosechas (
   cantidad    NUMERIC(10,2) NOT NULL,
   unidad      TEXT    NOT NULL,
   notas       TEXT,
+  user_id     UUID    NOT NULL REFERENCES auth.users(id),
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -26,24 +27,56 @@ CREATE TABLE IF NOT EXISTS ventas (
   precio_unitario  NUMERIC(10,2) NOT NULL,
   total            NUMERIC(10,2) GENERATED ALWAYS AS (cantidad * precio_unitario) STORED,
   notas            TEXT,
+  user_id          UUID    NOT NULL REFERENCES auth.users(id),
   created_at       TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Índices para búsquedas por fecha
+-- Tabla de proveedores
+CREATE TABLE IF NOT EXISTS proveedores (
+  id         UUID    DEFAULT gen_random_uuid() PRIMARY KEY,
+  nombre     TEXT    NOT NULL,
+  contacto   TEXT,
+  telefono   TEXT,
+  email      TEXT,
+  notas      TEXT,
+  user_id    UUID    NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Índices
 CREATE INDEX IF NOT EXISTS idx_cosechas_fecha ON cosechas(fecha);
+CREATE INDEX IF NOT EXISTS idx_cosechas_user  ON cosechas(user_id);
 CREATE INDEX IF NOT EXISTS idx_ventas_fecha   ON ventas(fecha);
+CREATE INDEX IF NOT EXISTS idx_ventas_user    ON ventas(user_id);
+CREATE INDEX IF NOT EXISTS idx_proveedores_user ON proveedores(user_id);
 
--- Habilitar Row Level Security (opcional, para mayor seguridad)
-ALTER TABLE cosechas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ventas   ENABLE ROW LEVEL SECURITY;
+-- Habilitar RLS
+ALTER TABLE cosechas    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ventas      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE proveedores ENABLE ROW LEVEL SECURITY;
 
--- Solo usuarios autenticados pueden acceder
-CREATE POLICY "Authenticated only" ON cosechas FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Authenticated only" ON ventas   FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- Políticas por usuario: cosechas
+CREATE POLICY "cosechas_select" ON cosechas FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "cosechas_insert" ON cosechas FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "cosechas_update" ON cosechas FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "cosechas_delete" ON cosechas FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- Políticas por usuario: ventas
+CREATE POLICY "ventas_select" ON ventas FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "ventas_insert" ON ventas FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "ventas_update" ON ventas FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "ventas_delete" ON ventas FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- Políticas por usuario: proveedores
+CREATE POLICY "proveedores_select" ON proveedores FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "proveedores_insert" ON proveedores FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "proveedores_update" ON proveedores FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "proveedores_delete" ON proveedores FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
 -- Habilitar Realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE cosechas;
 ALTER PUBLICATION supabase_realtime ADD TABLE ventas;
+ALTER PUBLICATION supabase_realtime ADD TABLE proveedores;
 
 -- =============================================
 -- Tabla de productos (lista dinámica)

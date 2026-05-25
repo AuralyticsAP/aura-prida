@@ -168,10 +168,10 @@ export default function App() {
       <main className="app-main">
         <div key={activeTab} className="tab-content">
           {activeTab === 'cosecha' && (
-            <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} />
+            <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} session={session} />
           )}
           {activeTab === 'venta' && (
-            <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} />
+            <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} session={session} />
           )}
           {activeTab === 'registros' && (
             <RegistrosHoy

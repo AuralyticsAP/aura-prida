@@ -12,7 +12,7 @@ const initialState = {
   notas: '',
 }
 
-export default function FormVenta({ onSuccess, productos = [], clientes = [] }) {
+export default function FormVenta({ onSuccess, productos = [], clientes = [], session }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -54,6 +54,7 @@ export default function FormVenta({ onSuccess, productos = [], clientes = [] }) 
       precio_unitario: parseFloat(form.precio_unitario),
       notas: form.notas || null,
       fecha: new Date().toISOString().split('T')[0],
+      user_id: session.user.id,
     }])
 
     setLoading(false)
