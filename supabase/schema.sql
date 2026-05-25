@@ -144,7 +144,11 @@ BEGIN
   INSERT INTO user_roles (user_id, role)
   VALUES (
     NEW.id,
-    CASE WHEN NEW.email = 'agrocomercialprida@gmail.com' THEN 'admin' ELSE 'viewer' END
+    CASE WHEN NEW.email IN (
+      'agrocomercialprida@gmail.com',
+      'luis.matarrita@auralyticsap.com',
+      'minor.guillen@auralyticsap.com'
+    ) THEN 'admin' ELSE 'viewer' END
   )
   ON CONFLICT (user_id) DO NOTHING;
 
