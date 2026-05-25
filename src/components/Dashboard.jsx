@@ -740,11 +740,33 @@ export default function Dashboard() {
           </div>
 
           {/* ── Rentabilidad ── */}
-          {rentData.length > 0 && (
-            <div className="db-chart-card db-chart-full">
+          <div className="db-chart-card db-chart-full">
+            {rentData.length > 0 ? (
               <RentabilidadSection data={rentData} />
-            </div>
-          )}
+            ) : (
+              <div className="db-rent-section">
+                <div className="db-chart-header" style={{ marginBottom: 0 }}>
+                  <h3 className="db-chart-title">Análisis de Rentabilidad</h3>
+                  <span className="db-chart-sub">Producción propia vs compra a proveedores</span>
+                </div>
+                <div className="db-rent-empty">
+                  <span className="db-rent-empty-icon">⚖️</span>
+                  <p className="db-rent-empty-title">Sin datos de costo de producción</p>
+                  <p className="db-rent-empty-desc">
+                    Para activar este análisis, ejecuta el siguiente SQL en Supabase y luego
+                    llena el campo <code>costo_produccion</code> para cada producto:
+                  </p>
+                  <div className="db-rent-code">
+                    ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo_produccion NUMERIC(10,2);
+                  </div>
+                  <p className="db-rent-empty-hint">
+                    Luego ve a <strong>Table Editor → productos</strong> y agrega el costo
+                    de producción (₡/kg) para cada cultivo. El análisis aparecerá aquí automáticamente.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
         </>
       )}
