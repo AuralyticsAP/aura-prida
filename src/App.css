@@ -2409,6 +2409,225 @@ body {
   .db-rent-table th, .db-rent-table td { padding: 10px 10px; }
 }
 
+/* ===== PERFIL DE CLIENTES ===== */
+.db-perfiles-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.db-perfiles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Card por cliente ── */
+.db-perfil-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.18s, background 0.18s;
+}
+.db-perfil-card:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(200,168,75,0.22);
+}
+.db-perfil-card--open {
+  border-color: rgba(200,168,75,0.38);
+  background: rgba(200,168,75,0.03);
+}
+
+/* ── Header clickable ── */
+.db-perfil-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.db-perfil-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1a2d5a, #0f1e45);
+  border: 1px solid rgba(200,168,75,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: #c8a84b;
+  flex-shrink: 0;
+  letter-spacing: -0.5px;
+}
+
+.db-perfil-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.db-perfil-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-perfil-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.db-perfil-fav {
+  font-size: 11px;
+  font-weight: 600;
+  color: #c8a84b;
+  background: rgba(200,168,75,0.1);
+  border: 1px solid rgba(200,168,75,0.25);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+}
+
+.db-perfil-total {
+  font-size: 13px;
+  font-weight: 800;
+  color: #34d399;
+}
+
+.db-perfil-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.db-perfil-fecha {
+  font-size: 11px;
+  color: rgba(200,215,245,0.4);
+}
+
+.db-perfil-chevron {
+  font-size: 9px;
+  color: rgba(200,215,245,0.4);
+}
+
+/* ── Expanded body ── */
+.db-perfil-body {
+  padding: 0 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInUp 0.18s ease both;
+}
+
+.db-perfil-body-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(200,215,245,0.4);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 14px;
+}
+
+.db-perfil-prod-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 72px 90px;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-perfil-prod-name {
+  font-size: 13px;
+  color: rgba(200,215,245,0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-perfil-prod-track {
+  height: 6px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.db-perfil-prod-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #c8a84b, #f0d070);
+  border-radius: 99px;
+  transition: width 0.55s ease;
+  min-width: 4px;
+}
+
+.db-perfil-prod-kg {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.db-perfil-prod-ing {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(200,215,245,0.45);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.db-perfil-body-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding-top: 10px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(200,215,245,0.45);
+}
+.db-perfil-body-footer strong { color: var(--text-primary); font-size: 13px; }
+
+.db-perfil-ultima { white-space: nowrap; }
+
+/* Empty state */
+.db-perfiles-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 36px 20px;
+  text-align: center;
+}
+.db-perfiles-empty span { font-size: 32px; line-height: 1; }
+.db-perfiles-empty p    { font-size: 14px; color: rgba(200,215,245,0.4); }
+
+/* ── Mobile ── */
+@media (max-width: 640px) {
+  .db-perfiles-grid { grid-template-columns: 1fr; }
+
+  .db-perfil-prod-row {
+    grid-template-columns: 100px 1fr 60px;
+  }
+  .db-perfil-prod-ing { display: none; }
+
+  .db-perfil-header { padding: 14px 16px; gap: 12px; }
+  .db-perfil-body   { padding: 0 16px 14px; }
+}
+
 /* ===== REGISTROS — FILTROS Y PERÍODO ===== */
 .registros-section {
   display: flex;

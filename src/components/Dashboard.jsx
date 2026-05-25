@@ -71,6 +71,53 @@ const DEMO_CLIENTES = [
   { nombre: 'Cruceros',       total: 35000  },
 ]
 
+const DEMO_PERFILES = [
+  {
+    cliente: 'Walmart',
+    favorito: 'Lechuga',
+    totalKg: 800,
+    totalIngresos: 1240000,
+    ultimaCompra: '2026-05-22',
+    productos: [
+      { nombre: 'Lechuga',   kg: 450, ingresos: 630000 },
+      { nombre: 'Tomate',    kg: 200, ingresos: 380000 },
+      { nombre: 'Zanahoria', kg: 150, ingresos: 230000 },
+    ],
+  },
+  {
+    cliente: 'Automercado',
+    favorito: 'Tomate',
+    totalKg: 400,
+    totalIngresos: 820000,
+    ultimaCompra: '2026-05-24',
+    productos: [
+      { nombre: 'Tomate',   kg: 300, ingresos: 570000 },
+      { nombre: 'Zucchini', kg: 100, ingresos: 250000 },
+    ],
+  },
+  {
+    cliente: 'Frumusa',
+    favorito: 'Lechuga',
+    totalKg: 280,
+    totalIngresos: 420000,
+    ultimaCompra: '2026-05-20',
+    productos: [
+      { nombre: 'Lechuga', kg: 200, ingresos: 280000 },
+      { nombre: 'Apio',    kg: 80,  ingresos: 140000 },
+    ],
+  },
+  {
+    cliente: 'Mega Súper',
+    favorito: 'Zanahoria',
+    totalKg: 220,
+    totalIngresos: 310000,
+    ultimaCompra: '2026-05-18',
+    productos: [
+      { nombre: 'Zanahoria', kg: 220, ingresos: 310000 },
+    ],
+  },
+]
+
 const DEMO_STAR   = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
 const DEMO_KPI    = { cosechas: 158, ventas: 94, ingresos: 2850000 }
 const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 320, vendido: 160, perdida: 160, pct: 50 }]
@@ -115,6 +162,13 @@ function isoDate(d) {
   const m = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
+}
+
+function fmtFechaCorta(fechaStr) {
+  if (!fechaStr) return '—'
+  return new Date(fechaStr.slice(0, 10) + 'T12:00:00').toLocaleDateString('es-CR', {
+    day: 'numeric', month: 'short',
+  })
 }
 
 function startOfWeek(d) {
@@ -203,6 +257,31 @@ function buildClienteData(ventas) {
     .map(([nombre, total]) => ({ nombre, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 8)
+}
+
+function buildClientePerfiles(ventas) {
+  const map = {}
+  ventas.forEach(v => {
+    const c = v.nombre_cliente || 'Sin cliente'
+    if (!map[c]) map[c] = { cliente: c, productos: {}, totalIngresos: 0, ultimaCompra: '' }
+    const prod = v.producto
+    if (!map[c].productos[prod]) map[c].productos[prod] = { kg: 0, ingresos: 0 }
+    map[c].productos[prod].kg       += parseFloat(v.cantidad || 0)
+    map[c].productos[prod].ingresos += parseFloat(v.total    || 0)
+    map[c].totalIngresos            += parseFloat(v.total    || 0)
+    const fecha = (v.fecha || '').slice(0, 10)
+    if (fecha > map[c].ultimaCompra) map[c].ultimaCompra = fecha
+  })
+  return Object.values(map)
+    .map(c => {
+      const prods = Object.entries(c.productos)
+        .map(([nombre, d]) => ({ nombre, kg: Math.round(d.kg * 10) / 10, ingresos: Math.round(d.ingresos) }))
+        .sort((a, b) => b.kg - a.kg)
+      const favorito = prods[0]?.nombre || '—'
+      const totalKg  = Math.round(prods.reduce((s, p) => s + p.kg, 0) * 10) / 10
+      return { cliente: c.cliente, productos: prods, favorito, totalKg, totalIngresos: Math.round(c.totalIngresos), ultimaCompra: c.ultimaCompra }
+    })
+    .sort((a, b) => b.totalIngresos - a.totalIngresos)
 }
 
 function buildLossAlerts(cosechas, ventas) {
@@ -471,6 +550,96 @@ function RentabilidadSection({ data }) {
   )
 }
 
+// ── Perfil de clientes ────────────────────────────────────────────────────────
+function ClientePerfilesSection({ data }) {
+  const [expanded, setExpanded] = useState(() => new Set())
+
+  const toggle = nombre => setExpanded(prev => {
+    const next = new Set(prev)
+    next.has(nombre) ? next.delete(nombre) : next.add(nombre)
+    return next
+  })
+
+  if (!data.length) {
+    return (
+      <div className="db-perfiles-section">
+        <div className="db-chart-header" style={{ marginBottom: 0 }}>
+          <h3 className="db-chart-title">Perfil de Clientes</h3>
+          <span className="db-chart-sub">Hábitos de compra · últimos 30 días</span>
+        </div>
+        <div className="db-perfiles-empty">
+          <span>👥</span>
+          <p>Sin ventas registradas en el período.</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="db-perfiles-section">
+      <div className="db-chart-header" style={{ marginBottom: 0 }}>
+        <h3 className="db-chart-title">Perfil de Clientes</h3>
+        <span className="db-chart-sub">Hábitos de compra · últimos 30 días</span>
+      </div>
+
+      <div className="db-perfiles-grid">
+        {data.map(c => {
+          const isOpen   = expanded.has(c.cliente)
+          const initials = c.cliente.slice(0, 2).toUpperCase()
+          const maxKg    = c.productos[0]?.kg || 1
+
+          return (
+            <div
+              key={c.cliente}
+              className={`db-perfil-card${isOpen ? ' db-perfil-card--open' : ''}`}
+            >
+              {/* ── Header clickable ── */}
+              <div className="db-perfil-header" onClick={() => toggle(c.cliente)}>
+                <div className="db-perfil-avatar">{initials}</div>
+                <div className="db-perfil-info">
+                  <span className="db-perfil-name">{c.cliente}</span>
+                  <div className="db-perfil-chips">
+                    <span className="db-perfil-fav">⭐ {c.favorito}</span>
+                    <span className="db-perfil-total">₡{c.totalIngresos.toLocaleString('es-CR')}</span>
+                  </div>
+                </div>
+                <div className="db-perfil-right">
+                  <span className="db-perfil-fecha">{fmtFechaCorta(c.ultimaCompra)}</span>
+                  <span className="db-perfil-chevron">{isOpen ? '▲' : '▼'}</span>
+                </div>
+              </div>
+
+              {/* ── Expanded body ── */}
+              {isOpen && (
+                <div className="db-perfil-body">
+                  <p className="db-perfil-body-title">Productos comprados</p>
+                  {c.productos.map((p, i) => (
+                    <div key={i} className="db-perfil-prod-row">
+                      <span className="db-perfil-prod-name">{p.nombre}</span>
+                      <div className="db-perfil-prod-track">
+                        <div
+                          className="db-perfil-prod-bar"
+                          style={{ width: `${Math.min(Math.round((p.kg / maxKg) * 100), 100)}%` }}
+                        />
+                      </div>
+                      <span className="db-perfil-prod-kg">{p.kg.toLocaleString('es-CR')} kg</span>
+                      <span className="db-perfil-prod-ing">₡{p.ingresos.toLocaleString('es-CR')}</span>
+                    </div>
+                  ))}
+                  <div className="db-perfil-body-footer">
+                    <span>Total: <strong>{c.totalKg.toLocaleString('es-CR')} kg</strong></span>
+                    <span className="db-perfil-ultima">Última compra: {fmtFechaCorta(c.ultimaCompra)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [mode, setMode]               = useState('real')
@@ -483,6 +652,7 @@ export default function Dashboard() {
   const [starProduct, setStarProduct] = useState(null)
   const [lossAlerts, setLossAlerts]   = useState([])
   const [rentData, setRentData]       = useState([])
+  const [perfiles, setPerfiles]       = useState([])
   const [hasData, setHasData]         = useState(false)
 
   const fetchReal = useCallback(async () => {
@@ -523,6 +693,7 @@ export default function Dashboard() {
     setStarProduct(buildStarProduct(venArr))
     setLossAlerts(buildLossAlerts(cosArr, venArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
+    setPerfiles(buildClientePerfiles(venW2))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
   }, [])
@@ -539,6 +710,7 @@ export default function Dashboard() {
       setStarProduct(DEMO_STAR)
       setLossAlerts(DEMO_LOSSES)
       setRentData(DEMO_RENT)
+      setPerfiles(DEMO_PERFILES)
       setHasData(true)
       setLoading(false)
     }
@@ -757,6 +929,11 @@ export default function Dashboard() {
                 })}
               </div>
             </div>
+          </div>
+
+          {/* ── Perfil de clientes ── */}
+          <div className="db-chart-card db-chart-full">
+            <ClientePerfilesSection data={perfiles} />
           </div>
 
           {/* ── Rentabilidad ── */}
