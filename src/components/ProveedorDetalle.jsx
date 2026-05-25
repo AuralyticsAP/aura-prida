@@ -5,7 +5,7 @@ import ConfirmModal from './ConfirmModal'
 
 const emptyProd = { nombre: '', precio: '', unidad: 'kg' }
 
-export default function ProveedorDetalle({ proveedor, session, showToast, onBack, onEdit, onDeleted, onArchived }) {
+export default function ProveedorDetalle({ proveedor, session, showToast, onBack, onEdit, onDeleted, onArchived, canWrite = false, canArchive = false, canDelete = false }) {
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
@@ -71,9 +71,9 @@ export default function ProveedorDetalle({ proveedor, session, showToast, onBack
       <div className="detalle-topbar">
         <button className="btn-back" onClick={onBack}>← Volver</button>
         <div className="detalle-actions">
-          <button className="btn-export" onClick={onEdit}>Editar</button>
-          <button className="btn-archive-sm" onClick={() => setConfirmArchive(true)}>📦 Archivar</button>
-          <button className="btn-danger-sm" onClick={() => setConfirmDelete(true)}>Eliminar</button>
+          {canWrite    && <button className="btn-export"      onClick={onEdit}>Editar</button>}
+          {canArchive  && <button className="btn-archive-sm"  onClick={() => setConfirmArchive(true)}>📦 Archivar</button>}
+          {canDelete   && <button className="btn-danger-sm"   onClick={() => setConfirmDelete(true)}>Eliminar</button>}
         </div>
       </div>
 

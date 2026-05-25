@@ -3,19 +3,31 @@ import confetti from 'canvas-confetti'
 import logoPrida from './assets/logo-prida.png'
 import { supabase } from './lib/supabase'
 import { useCountUp } from './hooks/useCountUp'
+import { useRole } from './hooks/useRole'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
 import RegistrosHoy from './components/RegistrosHoy'
 import Proveedores from './components/Proveedores'
+import Usuarios from './components/Usuarios'
 import Login from './components/Login'
 import './App.css'
 
-const TABS = [
+const ALL_TABS = [
   { id: 'cosecha',     label: 'Cosecha',     icon: '🌿' },
   { id: 'venta',       label: 'Venta',       icon: '💰' },
   { id: 'registros',   label: 'Registros',   icon: '📋' },
   { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
+  { id: 'usuarios',    label: 'Usuarios',    icon: '👥', adminOnly: true },
 ]
+
+function SinPermiso({ mensaje }) {
+  return (
+    <div className="card sin-permiso-card">
+      <span className="sin-permiso-icon">🔒</span>
+      <p>{mensaje}</p>
+    </div>
+  )
+}
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -32,6 +44,8 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session))
     return () => subscription.unsubscribe()
   }, [])
+
+  const { role, loading: roleLoading, isAdmin, canWrite, canArchive, canDelete } = useRole(session)
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -133,13 +147,35 @@ export default function App() {
     }, 750)
   }
 
-  const totalVendido = ventas.reduce((s, v) => s + parseFloat(v.total || 0), 0)
-  const animCosechas = useCountUp(cosechas.length)
-  const animVentas   = useCountUp(ventas.length)
-  const animTotal    = useCountUp(totalVendido)
+  const totalVendido  = ventas.reduce((s, v) => s + parseFloat(v.total || 0), 0)
+  const animCosechas  = useCountUp(cosechas.length)
+  const animVentas    = useCountUp(ventas.length)
+  const animTotal     = useCountUp(totalVendido)
 
   if (session === undefined) return null
   if (!session) return <Login />
+
+  // Cuenta desactivada
+  if (!roleLoading && role === '__deactivated__') {
+    return (
+      <div className="login-page">
+        <div className="login-card" style={{ textAlign: 'center', gap: 20 }}>
+          <img src={logoPrida} alt="Prida" className="login-logo" />
+          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+            Tu cuenta ha sido <strong style={{ color: '#f87171' }}>desactivada</strong>.<br />
+            Contactá al administrador del sistema.
+          </p>
+          <button className="btn-danger" onClick={() => supabase.auth.signOut()}>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const TABS = roleLoading
+    ? ALL_TABS.filter(t => !t.adminOnly)
+    : ALL_TABS.filter(t => !t.adminOnly || isAdmin)
 
   return (
     <div className="app">
@@ -153,6 +189,13 @@ export default function App() {
             </div>
           </div>
           <div className="header-right">
+            {!roleLoading && role && (
+              <span className={`role-badge header-role-badge ${
+                role === 'admin' ? 'badge-admin' : role === 'editor' ? 'badge-editor' : 'badge-viewer'
+              }`}>
+                {role === 'admin' ? 'Admin' : role === 'editor' ? 'Editor' : 'Viewer'}
+              </span>
+            )}
             <div className="header-nexobit">
               <span>by</span>
               <strong>AuralyticsAP</strong>
@@ -201,24 +244,45 @@ export default function App() {
 
       <main className="app-main">
         <div key={activeTab} className="tab-content">
-          {activeTab === 'cosecha' && (
-            <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} session={session} />
-          )}
-          {activeTab === 'venta' && (
-            <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} session={session} />
-          )}
-          {activeTab === 'registros' && (
-            <RegistrosHoy
-              cosechas={cosechas}
-              ventas={ventas}
-              loading={loadingData}
-              onArchive={handleArchive}
-              onDelete={handleDelete}
-              onRefresh={fetchData}
-            />
-          )}
-          {activeTab === 'proveedores' && (
-            <Proveedores session={session} showToast={showToast} />
+          {roleLoading ? (
+            <div className="loading-state">Cargando...</div>
+          ) : (
+            <>
+              {activeTab === 'cosecha' && (
+                canWrite
+                  ? <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} session={session} />
+                  : <SinPermiso mensaje="No tienes permiso para registrar cosechas." />
+              )}
+              {activeTab === 'venta' && (
+                canWrite
+                  ? <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} session={session} />
+                  : <SinPermiso mensaje="No tienes permiso para registrar ventas." />
+              )}
+              {activeTab === 'registros' && (
+                <RegistrosHoy
+                  cosechas={cosechas}
+                  ventas={ventas}
+                  loading={loadingData}
+                  onArchive={handleArchive}
+                  onDelete={handleDelete}
+                  onRefresh={fetchData}
+                  canArchive={canArchive}
+                  canDelete={canDelete}
+                />
+              )}
+              {activeTab === 'proveedores' && (
+                <Proveedores
+                  session={session}
+                  showToast={showToast}
+                  canWrite={canWrite}
+                  canArchive={canArchive}
+                  canDelete={canDelete}
+                />
+              )}
+              {activeTab === 'usuarios' && isAdmin && (
+                <Usuarios session={session} showToast={showToast} />
+              )}
+            </>
           )}
         </div>
       </main>

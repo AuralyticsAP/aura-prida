@@ -4,7 +4,7 @@ import ProveedorDetalle from './ProveedorDetalle'
 import FormProveedor from './FormProveedor'
 import ConfirmModal from './ConfirmModal'
 
-export default function Proveedores({ session, showToast }) {
+export default function Proveedores({ session, showToast, canWrite = false, canArchive = false, canDelete = false }) {
   const [view, setView] = useState('list')
   const [proveedores, setProveedores] = useState([])
   const [selected, setSelected] = useState(null)
@@ -92,6 +92,9 @@ export default function Proveedores({ session, showToast }) {
       onEdit={() => { setEditTarget(selected); setView('form') }}
       onDeleted={() => { goList(); showToast('Proveedor eliminado') }}
       onArchived={() => { goList(); showToast('📦 Proveedor archivado') }}
+      canWrite={canWrite}
+      canArchive={canArchive}
+      canDelete={canDelete}
     />
   )
 
@@ -128,9 +131,11 @@ export default function Proveedores({ session, showToast }) {
             {loading ? '...' : `${proveedores.length} proveedor${proveedores.length !== 1 ? 'es' : ''} registrado${proveedores.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <button className="btn-primary btn-add-proveedor" onClick={() => { setEditTarget(null); setView('form') }}>
-          + Agregar
-        </button>
+        {canWrite && (
+          <button className="btn-primary btn-add-proveedor" onClick={() => { setEditTarget(null); setView('form') }}>
+            + Agregar
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -161,18 +166,24 @@ export default function Proveedores({ session, showToast }) {
                     {count} producto{count !== 1 ? 's' : ''}
                   </span>
                 </div>
-                <div className="proveedor-card-actions" onClick={e => e.stopPropagation()}>
-                  <button
-                    className="btn-action-archive"
-                    title="Archivar"
-                    onClick={() => handleArchiveProveedor(p.id)}
-                  >🗃️</button>
-                  <button
-                    className="btn-action-delete"
-                    title="Eliminar"
-                    onClick={() => setConfirmDel({ id: p.id, nombre: p.nombre })}
-                  >🗑️</button>
-                </div>
+                {(canArchive || canDelete) && (
+                  <div className="proveedor-card-actions" onClick={e => e.stopPropagation()}>
+                    {canArchive && (
+                      <button
+                        className="btn-action-archive"
+                        title="Archivar"
+                        onClick={() => handleArchiveProveedor(p.id)}
+                      >🗃️</button>
+                    )}
+                    {canDelete && (
+                      <button
+                        className="btn-action-delete"
+                        title="Eliminar"
+                        onClick={() => setConfirmDel({ id: p.id, nombre: p.nombre })}
+                      >🗑️</button>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
@@ -206,16 +217,20 @@ export default function Proveedores({ session, showToast }) {
                   <span className="proveedor-arch-name">🏭 {p.nombre}</span>
                   {p.contacto && <span className="proveedor-card-contacto" style={{ fontSize: 12 }}>{p.contacto}</span>}
                   <div className="proveedor-arch-actions">
-                    <button
-                      className="btn-action-restore"
-                      title="Restaurar"
-                      onClick={() => handleRestoreProveedor(p.id)}
-                    >↩</button>
-                    <button
-                      className="btn-action-delete"
-                      title="Eliminar permanentemente"
-                      onClick={() => setArchConfirmDel({ id: p.id, nombre: p.nombre })}
-                    >🗑️</button>
+                    {canArchive && (
+                      <button
+                        className="btn-action-restore"
+                        title="Restaurar"
+                        onClick={() => handleRestoreProveedor(p.id)}
+                      >↩</button>
+                    )}
+                    {canDelete && (
+                      <button
+                        className="btn-action-delete"
+                        title="Eliminar permanentemente"
+                        onClick={() => setArchConfirmDel({ id: p.id, nombre: p.nombre })}
+                      >🗑️</button>
+                    )}
                   </div>
                 </div>
               ))}

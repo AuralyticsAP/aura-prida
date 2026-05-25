@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { exportToCSV, formatDateForFilename } from '../lib/csv'
 import ConfirmModal from './ConfirmModal'
 
-export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onDelete, onRefresh }) {
+export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onDelete, onRefresh, canArchive = false, canDelete = false }) {
   const today = new Date().toLocaleDateString('es-CR', {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
   })
@@ -124,18 +124,24 @@ export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onD
                     <td className="td-hora">
                       {new Date(r.created_at).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="td-actions">
-                      <button
-                        className="btn-action-archive"
-                        title="Archivar"
-                        onClick={() => onArchive('cosechas', r.id)}
-                      >🗃️</button>
-                      <button
-                        className="btn-action-delete"
-                        title="Eliminar"
-                        onClick={() => setConfirmDel({ tabla: 'cosechas', id: r.id, label: r.producto })}
-                      >🗑️</button>
-                    </td>
+                    {(canArchive || canDelete) && (
+                      <td className="td-actions">
+                        {canArchive && (
+                          <button
+                            className="btn-action-archive"
+                            title="Archivar"
+                            onClick={() => onArchive('cosechas', r.id)}
+                          >🗃️</button>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="btn-action-delete"
+                            title="Eliminar"
+                            onClick={() => setConfirmDel({ tabla: 'cosechas', id: r.id, label: r.producto })}
+                          >🗑️</button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -185,18 +191,24 @@ export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onD
                     <td className="td-hora">
                       {new Date(r.created_at).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit' })}
                     </td>
-                    <td className="td-actions">
-                      <button
-                        className="btn-action-archive"
-                        title="Archivar"
-                        onClick={() => onArchive('ventas', r.id)}
-                      >🗃️</button>
-                      <button
-                        className="btn-action-delete"
-                        title="Eliminar"
-                        onClick={() => setConfirmDel({ tabla: 'ventas', id: r.id, label: r.producto })}
-                      >🗑️</button>
-                    </td>
+                    {(canArchive || canDelete) && (
+                      <td className="td-actions">
+                        {canArchive && (
+                          <button
+                            className="btn-action-archive"
+                            title="Archivar"
+                            onClick={() => onArchive('ventas', r.id)}
+                          >🗃️</button>
+                        )}
+                        {canDelete && (
+                          <button
+                            className="btn-action-delete"
+                            title="Eliminar"
+                            onClick={() => setConfirmDel({ tabla: 'ventas', id: r.id, label: r.producto })}
+                          >🗑️</button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -256,18 +268,24 @@ export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onD
                             <td className="td-producto">{r.producto}</td>
                             <td className="td-number">{r.cantidad}</td>
                             <td>{r.unidad}</td>
-                            <td className="td-actions">
-                              <button
-                                className="btn-action-restore"
-                                title="Restaurar"
-                                onClick={() => handleRestore('cosechas', r.id)}
-                              >↩</button>
-                              <button
-                                className="btn-action-delete"
-                                title="Eliminar permanentemente"
-                                onClick={() => setArchConfirmDel({ tabla: 'cosechas', id: r.id, label: r.producto })}
-                              >🗑️</button>
-                            </td>
+                            {(canArchive || canDelete) && (
+                              <td className="td-actions">
+                                {canArchive && (
+                                  <button
+                                    className="btn-action-restore"
+                                    title="Restaurar"
+                                    onClick={() => handleRestore('cosechas', r.id)}
+                                  >↩</button>
+                                )}
+                                {canDelete && (
+                                  <button
+                                    className="btn-action-delete"
+                                    title="Eliminar permanentemente"
+                                    onClick={() => setArchConfirmDel({ tabla: 'cosechas', id: r.id, label: r.producto })}
+                                  >🗑️</button>
+                                )}
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>
@@ -297,18 +315,24 @@ export default function RegistrosHoy({ cosechas, ventas, loading, onArchive, onD
                             <td className="td-producto">{r.producto}</td>
                             <td>{r.nombre_cliente}</td>
                             <td className="td-total">₡{parseFloat(r.total).toLocaleString('es-CR')}</td>
-                            <td className="td-actions">
-                              <button
-                                className="btn-action-restore"
-                                title="Restaurar"
-                                onClick={() => handleRestore('ventas', r.id)}
-                              >↩</button>
-                              <button
-                                className="btn-action-delete"
-                                title="Eliminar permanentemente"
-                                onClick={() => setArchConfirmDel({ tabla: 'ventas', id: r.id, label: r.producto })}
-                              >🗑️</button>
-                            </td>
+                            {(canArchive || canDelete) && (
+                              <td className="td-actions">
+                                {canArchive && (
+                                  <button
+                                    className="btn-action-restore"
+                                    title="Restaurar"
+                                    onClick={() => handleRestore('ventas', r.id)}
+                                  >↩</button>
+                                )}
+                                {canDelete && (
+                                  <button
+                                    className="btn-action-delete"
+                                    title="Eliminar permanentemente"
+                                    onClick={() => setArchConfirmDel({ tabla: 'ventas', id: r.id, label: r.producto })}
+                                  >🗑️</button>
+                                )}
+                              </td>
+                            )}
                           </tr>
                         ))}
                       </tbody>

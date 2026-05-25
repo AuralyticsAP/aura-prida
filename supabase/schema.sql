@@ -92,6 +92,87 @@ CREATE INDEX IF NOT EXISTS idx_ventas_estado      ON ventas(estado);
 CREATE INDEX IF NOT EXISTS idx_proveedores_estado ON proveedores(estado);
 
 -- =============================================
+-- Migración: Sistema de roles y permisos
+-- =============================================
+
+-- Tabla de perfiles (espejo de auth.users accesible desde el cliente)
+CREATE TABLE IF NOT EXISTS profiles (
+  id         UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email      TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "profiles_read"   ON profiles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "profiles_insert" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
+
+-- Tabla de roles
+CREATE TABLE IF NOT EXISTS user_roles (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role       TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')) DEFAULT 'viewer',
+  activo     BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+-- Función anti-recursión para verificar si el usuario actual es admin
+CREATE OR REPLACE FUNCTION is_admin_user()
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = auth.uid() AND role = 'admin' AND activo = true
+  );
+$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+
+-- Políticas de user_roles
+CREATE POLICY "roles_read"   ON user_roles FOR SELECT TO authenticated USING (true);
+CREATE POLICY "roles_insert" ON user_roles FOR INSERT TO authenticated WITH CHECK (is_admin_user());
+CREATE POLICY "roles_update" ON user_roles FOR UPDATE TO authenticated USING (is_admin_user());
+CREATE POLICY "roles_delete" ON user_roles FOR DELETE TO authenticated USING (is_admin_user());
+
+-- Trigger: crear perfil y rol automáticamente al registrarse
+CREATE OR REPLACE FUNCTION handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO profiles (id, email)
+  VALUES (NEW.id, NEW.email)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO user_roles (user_id, role)
+  VALUES (
+    NEW.id,
+    CASE WHEN NEW.email = 'agrocomercialprida@gmail.com' THEN 'admin' ELSE 'viewer' END
+  )
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+-- Migrar usuarios existentes (ejecutar una sola vez)
+INSERT INTO profiles (id, email)
+SELECT id, email FROM auth.users
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO user_roles (user_id, role)
+SELECT id, 'viewer' FROM auth.users
+ON CONFLICT (user_id) DO NOTHING;
+
+-- Asignar admin a agrocomercialprida@gmail.com
+UPDATE user_roles ur
+SET role = 'admin'
+FROM auth.users au
+WHERE au.id = ur.user_id
+  AND au.email = 'agrocomercialprida@gmail.com';
+
+-- =============================================
 -- Tabla de productos (lista dinámica)
 -- =============================================
 CREATE TABLE IF NOT EXISTS productos (
