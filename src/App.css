@@ -253,7 +253,19 @@ body {
 
 /* ===== TAB CONTENT ANIMATION ===== */
 .tab-content {
-  animation: fadeInUp 0.32s ease both;
+  animation: tabSlideIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
 }
 
 /* ===== CARD ===== */
@@ -1263,6 +1275,14 @@ body {
 @keyframes slideUp {
   from { opacity: 0; transform: translateX(-50%) translateY(14px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ===== ACCESIBILIDAD: reduce motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  .tab-content,
+  .summary-item,
+  .proveedor-card,
+  .archivados-content { animation: none !important; transition: none !important; }
 }
 
 /* ===== RESPONSIVE ===== */

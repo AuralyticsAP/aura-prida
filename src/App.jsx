@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
+import confetti from 'canvas-confetti'
 import logoPrida from './assets/logo-prida.png'
 import { supabase } from './lib/supabase'
+import { useCountUp } from './hooks/useCountUp'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
 import RegistrosHoy from './components/RegistrosHoy'
@@ -122,7 +124,19 @@ export default function App() {
   const handleVentaSuccess = () => {
     showToast('✅ Venta registrada correctamente')
     setActiveTab('registros')
+    const colors = ['#3AAE38', '#C4A012', '#D4B828', '#ffffff']
+    confetti({ particleCount: 55, angle: 60,  spread: 55, origin: { x: 0,    y: 0.7 }, colors, gravity: 0.85, scalar: 0.9 })
+    confetti({ particleCount: 55, angle: 120, spread: 55, origin: { x: 1,    y: 0.7 }, colors, gravity: 0.85, scalar: 0.9 })
+    setTimeout(() => {
+      confetti({ particleCount: 30, angle: 75,  spread: 40, origin: { x: 0.25, y: 0.5 }, colors, gravity: 0.7, scalar: 0.8 })
+      confetti({ particleCount: 30, angle: 105, spread: 40, origin: { x: 0.75, y: 0.5 }, colors, gravity: 0.7, scalar: 0.8 })
+    }, 750)
   }
+
+  const totalVendido = ventas.reduce((s, v) => s + parseFloat(v.total || 0), 0)
+  const animCosechas = useCountUp(cosechas.length)
+  const animVentas   = useCountUp(ventas.length)
+  const animTotal    = useCountUp(totalVendido)
 
   if (session === undefined) return null
   if (!session) return <Login />
@@ -153,20 +167,20 @@ export default function App() {
       <div className="summary-bar">
         <div className="summary-item">
           <span className="summary-icon">🌿</span>
-          <span className="summary-num">{cosechas.length}</span>
+          <span className="summary-num">{Math.round(animCosechas)}</span>
           <span className="summary-label">Cosechas hoy</span>
         </div>
         <div className="summary-divider" />
         <div className="summary-item">
           <span className="summary-icon">💰</span>
-          <span className="summary-num">{ventas.length}</span>
+          <span className="summary-num">{Math.round(animVentas)}</span>
           <span className="summary-label">Ventas hoy</span>
         </div>
         <div className="summary-divider" />
         <div className="summary-item">
           <span className="summary-icon">📈</span>
           <span className="summary-num">
-            ₡{ventas.reduce((s, v) => s + parseFloat(v.total || 0), 0).toLocaleString('es-CR')}
+            ₡{Math.round(animTotal).toLocaleString('es-CR')}
           </span>
           <span className="summary-label">Total vendido</span>
         </div>
