@@ -21,7 +21,16 @@ const PIE_COLORS = [
   '#a78bfa', '#fb923c', '#38bdf8', '#f472b6',
 ]
 
-const DIAS_LABEL = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+// Mon-Sun order for the bar chart (Latin America standard)
+const DIAS_SEMANA = [
+  { key: 1, label: 'Lun' },
+  { key: 2, label: 'Mar' },
+  { key: 3, label: 'Mié' },
+  { key: 4, label: 'Jue' },
+  { key: 5, label: 'Vie' },
+  { key: 6, label: 'Sáb' },
+  { key: 0, label: 'Dom' },
+]
 
 // ── Demo data ─────────────────────────────────────────────────────────────────
 const DEMO_WEEKLY = [
@@ -38,6 +47,7 @@ const DEMO_DAYS = [
   { dia: 'Jue', ventas: 275000 },
   { dia: 'Vie', ventas: 350000 },
   { dia: 'Sáb', ventas: 210000 },
+  { dia: 'Dom', ventas: 95000  },
 ]
 
 const DEMO_PRODUCTOS = [
@@ -99,7 +109,13 @@ const DEMO_RENT = [
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function isoDate(d) { return d.toISOString().split('T')[0] }
+// Use LOCAL date to avoid UTC offset shifting the day in Costa Rica (UTC-6)
+function isoDate(d) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
 
 function startOfWeek(d) {
   const date = new Date(d)
@@ -130,12 +146,16 @@ function buildWeeklyData(ventas) {
 }
 
 function buildDayOfWeekData(ventas) {
-  const totals = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
+  // totals indexed 0 (Dom) to 6 (Sáb)
+  const totals = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
   ventas.forEach(r => {
-    const day = new Date(r.fecha + 'T12:00:00').getDay()
-    if (day >= 1 && day <= 6) totals[day] += parseFloat(r.total || 0)
+    // .slice(0,10) handles both "YYYY-MM-DD" and "YYYY-MM-DDTHH:mm:ss+00:00" formats
+    const fechaStr = (r.fecha || '').slice(0, 10)
+    if (fechaStr.length < 10) return
+    const day = new Date(fechaStr + 'T12:00:00').getDay()
+    totals[day] += parseFloat(r.total || 0)
   })
-  return [1, 2, 3, 4, 5, 6].map(d => ({ dia: DIAS_LABEL[d], ventas: Math.round(totals[d]) }))
+  return DIAS_SEMANA.map(({ key, label }) => ({ dia: label, ventas: Math.round(totals[key]) }))
 }
 
 function buildProductoData(cosechas, ventas) {
@@ -471,9 +491,9 @@ export default function Dashboard() {
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
     const from     = isoDate(firstDay)
     const to       = isoDate(now)
-    const fourW    = new Date(now)
-    fourW.setDate(fourW.getDate() - 28)
-    const fromW    = isoDate(fourW)
+    const thirtyD  = new Date(now)
+    thirtyD.setDate(thirtyD.getDate() - 29) // 30-day window inclusive
+    const fromW    = isoDate(thirtyD)
 
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
@@ -635,7 +655,7 @@ export default function Dashboard() {
             <div className="db-chart-card">
               <div className="db-chart-header">
                 <h3 className="db-chart-title">Ventas por día</h3>
-                <span className="db-chart-sub">Lunes a sábado (últimas 4 sem.)</span>
+                <span className="db-chart-sub">Por día de la semana (últimos 30 días)</span>
               </div>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dayData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={36}>
