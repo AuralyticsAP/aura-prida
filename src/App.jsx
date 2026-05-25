@@ -6,7 +6,7 @@ import { useCountUp } from './hooks/useCountUp'
 import { useRole } from './hooks/useRole'
 import FormCosecha from './components/FormCosecha'
 import FormVenta from './components/FormVenta'
-import RegistrosHoy from './components/RegistrosHoy'
+import Registros from './components/Registros'
 import Proveedores from './components/Proveedores'
 import Usuarios from './components/Usuarios'
 import GestionProductos from './components/GestionProductos'
@@ -263,12 +263,7 @@ export default function App() {
                   : <SinPermiso mensaje="No tienes permiso para registrar ventas." />
               )}
               {activeTab === 'registros' && (
-                <RegistrosHoy
-                  cosechas={cosechas}
-                  ventas={ventas}
-                  loading={loadingData}
-                  onArchive={handleArchive}
-                  onDelete={handleDelete}
+                <Registros
                   onRefresh={fetchData}
                   canArchive={canArchive}
                   canDelete={canDelete}
