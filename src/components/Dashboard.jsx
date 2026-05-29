@@ -120,7 +120,11 @@ const DEMO_PERFILES = [
 
 const DEMO_STAR   = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
 const DEMO_KPI    = { cosechas: 158, ventas: 94, ingresos: 2850000 }
-const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 320, vendido: 160, perdida: 160, pct: 50 }]
+const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 320, vendido: 160, mermaKg: 85, sinDestino: 75, pct: 23 }]
+const DEMO_MERMAS_SUMMARY = [
+  { producto: 'Zucchini', cantidad: 85 },
+  { producto: 'Tomate',   cantidad: 30 },
+]
 
 const DEMO_RENT = [
   {
@@ -284,23 +288,34 @@ function buildClientePerfiles(ventas) {
     .sort((a, b) => b.totalIngresos - a.totalIngresos)
 }
 
-function buildLossAlerts(cosechas, ventas) {
-  const cos = {}, ven = {}
+function buildMermasSummary(mermas) {
+  const map = {}
+  mermas.forEach(r => {
+    map[r.producto] = (map[r.producto] || 0) + parseFloat(r.cantidad || 0)
+  })
+  return Object.entries(map)
+    .map(([producto, cantidad]) => ({ producto, cantidad: Math.round(cantidad * 10) / 10 }))
+    .sort((a, b) => b.cantidad - a.cantidad)
+}
+
+function buildLossAlerts(cosechas, ventas, mermas = []) {
+  const cos = {}, ven = {}, mer = {}
   cosechas.forEach(r => { cos[r.producto] = (cos[r.producto] || 0) + parseFloat(r.cantidad || 0) })
   ventas.forEach(r   => { ven[r.producto] = (ven[r.producto] || 0) + parseFloat(r.cantidad || 0) })
+  mermas.forEach(r   => { mer[r.producto] = (mer[r.producto] || 0) + parseFloat(r.cantidad || 0) })
   return Object.entries(cos)
     .filter(([p, c]) => {
-      const v = ven[p] || 0
-      const perdida = c - v
-      return c > 10 && perdida > 0 && (perdida / c) > 0.20
+      const sinDestino = c - (ven[p] || 0) - (mer[p] || 0)
+      return c > 10 && sinDestino > 0 && (sinDestino / c) > 0.20
     })
     .map(([producto, cosechado]) => {
-      const vendido = Math.round(ven[producto] || 0)
-      const perdida = Math.round(cosechado - vendido)
-      const pct     = Math.round((perdida / cosechado) * 100)
-      return { producto, cosechado: Math.round(cosechado), vendido, perdida, pct }
+      const vendido    = Math.round(ven[producto] || 0)
+      const mermaKg    = Math.round(mer[producto] || 0)
+      const sinDestino = Math.round(cosechado - vendido - mermaKg)
+      const pct        = Math.round((sinDestino / cosechado) * 100)
+      return { producto, cosechado: Math.round(cosechado), vendido, mermaKg, sinDestino, pct }
     })
-    .sort((a, b) => b.perdida - a.perdida)
+    .sort((a, b) => b.sinDestino - a.sinDestino)
 }
 
 function buildRentabilidad(prodsCost, ppData, provMap, ventas) {
@@ -656,6 +671,7 @@ export default function Dashboard() {
   const [rentData, setRentData]       = useState([])
   const [perfiles, setPerfiles]       = useState([])
   const [hasData, setHasData]         = useState(false)
+  const [mermasSummary, setMermasSummary] = useState([])
 
   useEffect(() => {
     supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
@@ -677,7 +693,7 @@ export default function Dashboard() {
 
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
-      { data: prodsCost }, { data: ppData }, { data: provsActive },
+      { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m },
     ] = await Promise.all([
       applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
@@ -686,9 +702,10 @@ export default function Dashboard() {
       supabase.from('productos').select('nombre,costo_produccion').eq('activo',true).not('costo_produccion','is',null),
       supabase.from('proveedor_productos').select('nombre,precio,proveedor_id'),
       supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
+      applyFinca(supabase.from('mermas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
     ])
 
-    const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || []
+    const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || [], merArr = m || []
     const totalIngresos = venArr.reduce((s, r) => s + parseFloat(r.total || 0), 0)
 
     // Build proveedor id→nombre map
@@ -701,7 +718,8 @@ export default function Dashboard() {
     setProdData(buildProductoData(cosW2, venW2))
     setClientData(buildClienteData(venW2))
     setStarProduct(buildStarProduct(venArr))
-    setLossAlerts(buildLossAlerts(cosArr, venArr))
+    setMermasSummary(buildMermasSummary(merArr))
+    setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setPerfiles(buildClientePerfiles(venW2))
     setHasData(cosArr.length > 0 || venArr.length > 0)
@@ -718,6 +736,7 @@ export default function Dashboard() {
       setProdData(DEMO_PRODUCTOS)
       setClientData(DEMO_CLIENTES)
       setStarProduct(DEMO_STAR)
+      setMermasSummary(DEMO_MERMAS_SUMMARY)
       setLossAlerts(DEMO_LOSSES)
       setRentData(DEMO_RENT)
       setPerfiles(DEMO_PERFILES)
@@ -790,41 +809,62 @@ export default function Dashboard() {
             <KpiCard icon="📈" label="Ingresos totales" value={kpi.ingresos} accent={GREEN_VAL} isCurrency />
           </div>
 
-          {/* ── Alertas de pérdida (urgente, rojo) ── */}
+          {/* ── Mermas registradas (ámbar) ── */}
+          {mermasSummary.length > 0 && (
+            <div className="db-mermas-banner">
+              <div className="db-mermas-banner-head">
+                <span className="db-mermas-pulse" />
+                <span className="db-mermas-banner-title">⚠️ Mermas registradas este mes</span>
+              </div>
+              <div className="db-mermas-rows">
+                {mermasSummary.map((a, i) => (
+                  <div key={i} className="db-mermas-row">
+                    <span className="db-mermas-prod">{a.producto}</span>
+                    <span className="db-mermas-kg">{a.cantidad.toLocaleString('es-CR')} kg registrados como pérdida</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Alertas de pérdida sin destino (rojo) ── */}
           {lossAlerts.length > 0 && (
             <div className="db-loss-banner">
               <div className="db-loss-banner-head">
                 <span className="db-loss-pulse" />
-                <span className="db-loss-banner-title">🚨 Riesgo de pérdida detectado</span>
+                <span className="db-loss-banner-title">🚨 Inventario sin destino registrado</span>
               </div>
-              {lossAlerts.map((a, i) => (
-                <div key={i} className="db-loss-row">
-                  <div className="db-loss-main">
-                    <span className="db-loss-phrase">
-                      Atención: <strong>{a.perdida} kg de {a.producto}</strong> en riesgo de pérdida
-                    </span>
-                    <span className="db-loss-detail">
-                      {a.pct}% sin vender — {a.vendido} de {a.cosechado} kg vendidos este mes
-                    </span>
-                  </div>
-                  <div className="db-loss-gauge-wrap">
-                    <div className="db-loss-gauge-track">
-                      <div
-                        className="db-loss-gauge-sold"
-                        style={{ width: `${a.cosechado > 0 ? Math.round((a.vendido / a.cosechado) * 100) : 0}%` }}
-                      />
-                      <div
-                        className="db-loss-gauge-lost"
-                        style={{ width: `${a.pct}%`, left: `${a.cosechado > 0 ? Math.round((a.vendido / a.cosechado) * 100) : 0}%` }}
-                      />
+              {lossAlerts.map((a, i) => {
+                const soldPct  = a.cosechado > 0 ? Math.round((a.vendido  / a.cosechado) * 100) : 0
+                const mermaPct = a.cosechado > 0 ? Math.round((a.mermaKg / a.cosechado) * 100) : 0
+                return (
+                  <div key={i} className="db-loss-row">
+                    <div className="db-loss-main">
+                      <span className="db-loss-phrase">
+                        Atención: <strong>{a.sinDestino} kg de {a.producto}</strong> sin destino registrado
+                      </span>
+                      <span className="db-loss-detail">
+                        {a.pct}% sin destino — {a.vendido} kg vendidos
+                        {a.mermaKg > 0 ? ` · ${a.mermaKg} kg en mermas` : ''} · {a.cosechado} kg cosechados este mes
+                      </span>
                     </div>
-                    <div className="db-loss-gauge-labels">
-                      <span style={{ color: BLUE_BAR }}>✓ {a.vendido} kg vendidos</span>
-                      <span style={{ color: '#f87171' }}>✗ {a.perdida} kg en riesgo</span>
+                    <div className="db-loss-gauge-wrap">
+                      <div className="db-loss-gauge-track">
+                        <div className="db-loss-gauge-sold"  style={{ width: `${soldPct}%` }} />
+                        {a.mermaKg > 0 && (
+                          <div className="db-loss-gauge-merma" style={{ width: `${mermaPct}%`, left: `${soldPct}%` }} />
+                        )}
+                        <div className="db-loss-gauge-lost"  style={{ width: `${a.pct}%`, left: `${soldPct + mermaPct}%` }} />
+                      </div>
+                      <div className="db-loss-gauge-labels">
+                        <span style={{ color: BLUE_BAR }}>✓ {a.vendido} kg vendidos</span>
+                        {a.mermaKg > 0 && <span style={{ color: '#fb923c' }}>⚠ {a.mermaKg} kg merma</span>}
+                        <span style={{ color: '#f87171' }}>✗ {a.sinDestino} kg sin destino</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 

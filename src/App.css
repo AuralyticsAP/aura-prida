@@ -2834,6 +2834,84 @@ body {
   color: #f87171;
 }
 
+.reg-chip-amber {
+  background: rgba(251,146,60,0.12);
+  border: 1px solid rgba(251,146,60,0.3);
+  color: #fb923c;
+}
+
+/* ── Mermas banner (ámbar) ── */
+.db-mermas-banner {
+  background: rgba(251,146,60,0.06);
+  border: 1.5px solid rgba(251,146,60,0.35);
+  border-radius: 20px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.db-mermas-banner-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.db-mermas-pulse {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fb923c;
+  box-shadow: 0 0 0 0 rgba(251,146,60,0.6);
+  animation: pulse-amber 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-amber {
+  0%   { box-shadow: 0 0 0 0 rgba(251,146,60,0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(251,146,60,0); }
+  100% { box-shadow: 0 0 0 0 rgba(251,146,60,0); }
+}
+
+.db-mermas-banner-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fb923c;
+}
+
+.db-mermas-rows { display: flex; flex-direction: column; gap: 6px; }
+
+.db-mermas-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.db-mermas-prod {
+  font-weight: 700;
+  color: #f4f6fc;
+  min-width: 90px;
+}
+
+.db-mermas-kg { color: rgba(200,215,245,0.65); }
+
+/* ── Gauge merma segment (naranja) ── */
+.db-loss-gauge-merma {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: rgba(251,146,60,0.75);
+  transition: width 0.7s ease;
+}
+
+/* ── Merma badge en tabla ── */
+.merma-motivo-badge {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* ── Compras ── */
 .compras-section { display: flex; flex-direction: column; gap: 16px; }
 

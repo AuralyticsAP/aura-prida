@@ -12,6 +12,7 @@ import Usuarios from './components/Usuarios'
 import GestionProductos from './components/GestionProductos'
 import Dashboard from './components/Dashboard'
 import Compras from './components/Compras'
+import Mermas from './components/Mermas'
 import Login from './components/Login'
 import './App.css'
 
@@ -20,6 +21,7 @@ const ALL_TABS = [
   { id: 'venta',       label: 'Venta',       icon: '💰' },
   { id: 'registros',   label: 'Registros',   icon: '📋' },
   { id: 'compras',     label: 'Compras',     icon: '🛒' },
+  { id: 'mermas',      label: 'Mermas',      icon: '⚠️' },
   { id: 'dashboard',   label: 'Dashboard',   icon: '📊' },
   { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
   { id: 'catalogos',   label: 'Catálogos',   icon: '🥬', adminOnly: true },
@@ -292,6 +294,16 @@ export default function App() {
               )}
               {activeTab === 'compras' && (
                 <Compras
+                  fincas={fincas}
+                  session={session}
+                  showToast={showToast}
+                  canWrite={canWrite}
+                  canArchive={canArchive}
+                  canDelete={canDelete}
+                />
+              )}
+              {activeTab === 'mermas' && (
+                <Mermas
                   fincas={fincas}
                   session={session}
                   showToast={showToast}
