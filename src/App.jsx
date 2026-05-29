@@ -15,6 +15,7 @@ import Compras from './components/Compras'
 import Mermas from './components/Mermas'
 import Devoluciones from './components/Devoluciones'
 import Gastos from './components/Gastos'
+import Personal from './components/Personal'
 import Login from './components/Login'
 import './App.css'
 
@@ -26,6 +27,7 @@ const ALL_TABS = [
   { id: 'mermas',       label: 'Mermas',       icon: '⚠️' },
   { id: 'devoluciones', label: 'Devoluciones', icon: '↩️' },
   { id: 'gastos',       label: 'Gastos',       icon: '💸' },
+  { id: 'personal',     label: 'Personal',     icon: '👷' },
   { id: 'dashboard',    label: 'Dashboard',    icon: '📊' },
   { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
   { id: 'catalogos',   label: 'Catálogos',   icon: '🥬', adminOnly: true },
@@ -328,6 +330,16 @@ export default function App() {
               )}
               {activeTab === 'gastos' && (
                 <Gastos
+                  fincas={fincas}
+                  session={session}
+                  showToast={showToast}
+                  canWrite={canWrite}
+                  canArchive={canArchive}
+                  canDelete={canDelete}
+                />
+              )}
+              {activeTab === 'personal' && (
+                <Personal
                   fincas={fincas}
                   session={session}
                   showToast={showToast}
