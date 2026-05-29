@@ -197,24 +197,21 @@ body {
   display: flex;
   gap: 5px;
   padding: 6px;
-  margin: 14px 16px 0;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  position: sticky;
-  top: 70px;
-  z-index: 99;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
 
 .tab-btn {
-  flex: 1;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 11px 8px;
+  padding: 11px 14px;
+  white-space: nowrap;
   background: transparent;
   border: none;
   border-radius: 11px;
@@ -1480,8 +1477,9 @@ body {
   .summary-num { font-size: 22px; }
   .summary-item { padding: 14px 12px 12px; }
 
-  .tab-nav { margin: 10px 10px 0; top: 62px; gap: 3px; }
-  .tab-btn { padding: 9px 4px; font-size: 11px; gap: 4px; }
+  .tab-nav-wrap { top: 62px; margin: 10px 10px 0; }
+  .tab-nav { gap: 3px; }
+  .tab-btn { padding: 9px 10px; font-size: 11px; gap: 4px; }
   .tab-icon { font-size: 15px; }
 
   .app-main { margin: 6px 10px 20px; padding: 18px 12px 24px; }
@@ -1503,13 +1501,33 @@ body {
 
 }
 
-/* ===== TAB NAV SCROLLABLE (mobile) ===== */
+/* ===== TAB NAV SCROLLABLE ===== */
 .tab-nav {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
 }
 .tab-nav::-webkit-scrollbar { display: none; }
+
+/* wrapper que envuelve el nav para el fade derecho */
+.tab-nav-wrap {
+  position: sticky;
+  top: 70px;
+  z-index: 99;
+  margin: 14px 16px 0;
+}
+.tab-nav-wrap::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 48px;
+  height: 100%;
+  border-radius: 0 16px 16px 0;
+  background: linear-gradient(to right, transparent, rgba(8,16,36,0.85));
+  pointer-events: none;
+  z-index: 1;
+}
 
 /* ===== GESTIÓN DE PRODUCTOS ===== */
 .gp-section { display: flex; flex-direction: column; gap: 16px; }
