@@ -127,6 +127,25 @@ const DEMO_MERMAS_SUMMARY = [
 ]
 const DEMO_DEVOLUCIONES = { count: 5, perdida: 45000, reingreso: 18000 }
 
+const DEMO_GASTOS_KPI        = { total: 485000, count: 12 }
+const DEMO_GASTOS_CATEGORIA  = [
+  { categoria: 'salarios',      monto: 180000 },
+  { categoria: 'fertilizantes', monto: 120000 },
+  { categoria: 'combustible',   monto: 85000  },
+  { categoria: 'transporte',    monto: 60000  },
+  { categoria: 'servicios',     monto: 40000  },
+]
+const DEMO_GASTOS_VS_INGRESOS = [
+  { finca: 'Dulce Nombre', ingresos: 1800000, gastos: 280000 },
+  { finca: 'Taras',        ingresos: 1050000, gastos: 205000 },
+]
+const DEMO_GASTOS_MENSUAL = [
+  { mes: 'feb 26', monto: 380000 },
+  { mes: 'mar 26', monto: 420000 },
+  { mes: 'abr 26', monto: 395000 },
+  { mes: 'may 26', monto: 485000 },
+]
+
 const DEMO_RENT = [
   {
     producto: 'Zanahoria',
@@ -287,6 +306,75 @@ function buildClientePerfiles(ventas) {
       return { cliente: c.cliente, productos: prods, favorito, totalKg, totalIngresos: Math.round(c.totalIngresos), ultimaCompra: c.ultimaCompra }
     })
     .sort((a, b) => b.totalIngresos - a.totalIngresos)
+}
+
+const CATEGORIA_LABELS = {
+  combustible:   '⛽ Combustible',
+  fertilizantes: '🌱 Fertilizantes',
+  herramientas:  '🔧 Herramientas',
+  salarios:      '👷 Salarios',
+  transporte:    '🚚 Transporte',
+  servicios:     '💡 Servicios',
+  otro:          '📌 Otro',
+}
+
+const GASTO_COLORS = {
+  combustible:   '#f59e0b',
+  fertilizantes: '#34d399',
+  herramientas:  '#60a5fa',
+  salarios:      '#c084fc',
+  transporte:    '#fb923c',
+  servicios:     '#38bdf8',
+  otro:          '#94a3b8',
+}
+
+function buildGastosKPI(gastos) {
+  const total = gastos.reduce((s, r) => s + parseFloat(r.monto || 0), 0)
+  return { total: Math.round(total), count: gastos.length }
+}
+
+function buildGastosByCategoria(gastos) {
+  const map = {}
+  gastos.forEach(r => {
+    map[r.categoria] = (map[r.categoria] || 0) + parseFloat(r.monto || 0)
+  })
+  return Object.entries(map)
+    .map(([categoria, monto]) => ({ categoria, monto: Math.round(monto) }))
+    .sort((a, b) => b.monto - a.monto)
+}
+
+function buildIngresosVsGastos(ventas, gastos) {
+  const ingMap = {}, gasMap = {}
+  ventas.forEach(r => {
+    const nombre = r.fincas?.nombre || 'Sin finca'
+    ingMap[nombre] = (ingMap[nombre] || 0) + parseFloat(r.total || 0)
+  })
+  gastos.forEach(r => {
+    const nombre = r.fincas?.nombre || 'Sin finca'
+    gasMap[nombre] = (gasMap[nombre] || 0) + parseFloat(r.monto || 0)
+  })
+  const all = new Set([...Object.keys(ingMap), ...Object.keys(gasMap)])
+  return [...all].map(finca => ({
+    finca,
+    ingresos: Math.round(ingMap[finca] || 0),
+    gastos:   Math.round(gasMap[finca] || 0),
+  })).sort((a, b) => b.ingresos - a.ingresos)
+}
+
+function buildGastosMensuales(gastosHist) {
+  const map = {}
+  gastosHist.forEach(r => {
+    const mes = r.fecha.slice(0, 7)
+    map[mes] = (map[mes] || 0) + parseFloat(r.monto || 0)
+  })
+  return Object.entries(map)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([mes, monto]) => {
+      const [y, m] = mes.split('-')
+      const label = new Date(parseInt(y), parseInt(m) - 1, 1)
+        .toLocaleDateString('es-CR', { month: 'short', year: '2-digit' })
+      return { mes: label, monto: Math.round(monto) }
+    })
 }
 
 function buildDevolucionesSummary(devoluciones) {
@@ -682,8 +770,12 @@ export default function Dashboard() {
   const [rentData, setRentData]       = useState([])
   const [perfiles, setPerfiles]       = useState([])
   const [hasData, setHasData]         = useState(false)
-  const [mermasSummary, setMermasSummary]           = useState([])
+  const [mermasSummary, setMermasSummary]             = useState([])
   const [devolucionesSummary, setDevolucionesSummary] = useState({ count: 0, perdida: 0, reingreso: 0 })
+  const [gastosKPI, setGastosKPI]                     = useState({ total: 0, count: 0 })
+  const [gastosByCategoria, setGastosByCategoria]     = useState([])
+  const [gastosVsIngresos, setGastosVsIngresos]       = useState([])
+  const [gastosMensual, setGastosMensual]             = useState([])
 
   useEffect(() => {
     supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
@@ -700,15 +792,17 @@ export default function Dashboard() {
     const thirtyD  = new Date(now)
     thirtyD.setDate(thirtyD.getDate() - 29) // 30-day window inclusive
     const fromW    = isoDate(thirtyD)
+    const from4M   = isoDate(new Date(now.getFullYear(), now.getMonth() - 3, 1))
 
     const applyFinca = (q) => fincaId != null ? q.eq('finca_id', fincaId) : q
 
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
       { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m }, { data: dev },
+      { data: g }, { data: gHist },
     ] = await Promise.all([
       applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
-      applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('cosechas').select('fecha,cantidad,producto').eq('estado','activo').gte('fecha',fromW).lte('fecha',to)),
       applyFinca(supabase.from('ventas').select('fecha,total,cantidad,producto,nombre_cliente').eq('estado','activo').gte('fecha',fromW).lte('fecha',to)),
       supabase.from('productos').select('nombre,costo_produccion').eq('activo',true).not('costo_produccion','is',null),
@@ -716,9 +810,12 @@ export default function Dashboard() {
       supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
       applyFinca(supabase.from('mermas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('devoluciones').select('total,puede_revenderse').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('gastos').select('monto,categoria,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('gastos').select('monto,fecha').eq('estado','activo').gte('fecha',from4M).lte('fecha',to)),
     ])
 
     const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || [], merArr = m || [], devArr = dev || []
+    const gasArr = g || [], gasHistArr = gHist || []
     const totalIngresos = venArr.reduce((s, r) => s + parseFloat(r.total || 0), 0)
 
     // Build proveedor id→nombre map
@@ -733,6 +830,10 @@ export default function Dashboard() {
     setStarProduct(buildStarProduct(venArr))
     setMermasSummary(buildMermasSummary(merArr))
     setDevolucionesSummary(buildDevolucionesSummary(devArr))
+    setGastosKPI(buildGastosKPI(gasArr))
+    setGastosByCategoria(buildGastosByCategoria(gasArr))
+    setGastosVsIngresos(buildIngresosVsGastos(venArr, gasArr))
+    setGastosMensual(buildGastosMensuales(gasHistArr))
     setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setPerfiles(buildClientePerfiles(venW2))
@@ -752,6 +853,10 @@ export default function Dashboard() {
       setStarProduct(DEMO_STAR)
       setMermasSummary(DEMO_MERMAS_SUMMARY)
       setDevolucionesSummary(DEMO_DEVOLUCIONES)
+      setGastosKPI(DEMO_GASTOS_KPI)
+      setGastosByCategoria(DEMO_GASTOS_CATEGORIA)
+      setGastosVsIngresos(DEMO_GASTOS_VS_INGRESOS)
+      setGastosMensual(DEMO_GASTOS_MENSUAL)
       setLossAlerts(DEMO_LOSSES)
       setRentData(DEMO_RENT)
       setPerfiles(DEMO_PERFILES)
@@ -1079,6 +1184,157 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* ── Gastos ── */}
+          {gastosKPI.count > 0 && (
+            <>
+              {/* KPIs gastos */}
+              <div className="db-gastos-header">
+                <p className="db-header-eyebrow">Control financiero</p>
+                <h3 className="db-gastos-title">Gastos operativos</h3>
+              </div>
+
+              <div className="db-gastos-kpi-row">
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Total gastos del mes</span>
+                  <span className="db-gastos-kpi-value db-gastos-kpi-danger">
+                    ₡{gastosKPI.total.toLocaleString('es-CR')}
+                  </span>
+                </div>
+                {gastosByCategoria[0] && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Categoría principal</span>
+                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
+                      {CATEGORIA_LABELS[gastosByCategoria[0].categoria] || gastosByCategoria[0].categoria}
+                    </span>
+                    <span className="db-gastos-kpi-sub">
+                      ₡{gastosByCategoria[0].monto.toLocaleString('es-CR')} · {gastosKPI.total > 0 ? Math.round((gastosByCategoria[0].monto / gastosKPI.total) * 100) : 0}% del total
+                    </span>
+                  </div>
+                )}
+                {gastosVsIngresos.length > 0 && (() => {
+                  const totalIng = gastosVsIngresos.reduce((s, r) => s + r.ingresos, 0)
+                  const balance  = totalIng - gastosKPI.total
+                  return (
+                    <div className="db-gastos-kpi-card">
+                      <span className="db-gastos-kpi-label">Balance neto del mes</span>
+                      <span className={`db-gastos-kpi-value ${balance >= 0 ? 'db-gastos-kpi-ok' : 'db-gastos-kpi-danger'}`}>
+                        {balance >= 0 ? '+' : ''}₡{Math.abs(balance).toLocaleString('es-CR')}
+                      </span>
+                      <span className="db-gastos-kpi-sub">Ingresos − Gastos</span>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              {/* Charts row: categorías + ingresos vs gastos */}
+              <div className="db-charts-row">
+                {/* Gastos por categoría */}
+                <div className="db-chart-card">
+                  <div className="db-chart-header">
+                    <h3 className="db-chart-title">Gastos por categoría</h3>
+                    <span className="db-chart-sub">Mes actual</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart
+                      data={gastosByCategoria}
+                      layout="vertical"
+                      margin={{ top: 8, right: 24, left: 120, bottom: 0 }}
+                      barSize={18}
+                    >
+                      <CartesianGrid stroke={GRID_C} horizontal={false} />
+                      <XAxis
+                        type="number"
+                        tick={{ fill: TEXT_S, fontSize: 11 }}
+                        axisLine={false} tickLine={false}
+                        tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`}
+                      />
+                      <YAxis
+                        type="category"
+                        dataKey="categoria"
+                        tick={{ fill: TEXT_S, fontSize: 12 }}
+                        axisLine={false} tickLine={false}
+                        width={115}
+                        tickFormatter={v => CATEGORIA_LABELS[v] || v}
+                      />
+                      <Tooltip
+                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gasto']}
+                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                        itemStyle={{ color: '#e8edf8' }}
+                      />
+                      <Bar dataKey="monto" name="Gasto" radius={[0, 6, 6, 0]}>
+                        {gastosByCategoria.map((d, i) => (
+                          <Cell key={i} fill={GASTO_COLORS[d.categoria] || '#94a3b8'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Ingresos vs Gastos por finca */}
+                {gastosVsIngresos.length > 0 && (
+                  <div className="db-chart-card">
+                    <div className="db-chart-header">
+                      <h3 className="db-chart-title">Ingresos vs Gastos</h3>
+                      <span className="db-chart-sub">Por finca · mes actual</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart
+                        data={gastosVsIngresos}
+                        margin={{ top: 12, right: 8, left: 0, bottom: 0 }}
+                        barGap={4} barSize={28}
+                      >
+                        <CartesianGrid stroke={GRID_C} vertical={false} />
+                        <XAxis dataKey="finca" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false}
+                          tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`} width={58}
+                        />
+                        <Tooltip
+                          formatter={(val, name) => [`₡${Math.round(val).toLocaleString('es-CR')}`, name]}
+                          contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                          itemStyle={{ color: '#e8edf8' }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: 14, fontSize: 13 }}
+                          formatter={n => <span style={{ color: TEXT_S }}>{n}</span>}
+                        />
+                        <Bar dataKey="ingresos" name="Ingresos" fill={GREEN_VAL} radius={[5, 5, 0, 0]} />
+                        <Bar dataKey="gastos"   name="Gastos"   fill="#f87171"  radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {/* Tendencia mensual de gastos */}
+              {gastosMensual.length > 1 && (
+                <div className="db-chart-card db-chart-full">
+                  <div className="db-chart-header">
+                    <h3 className="db-chart-title">Tendencia de gastos</h3>
+                    <span className="db-chart-sub">Últimos 4 meses</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={gastosMensual} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={40}>
+                      <CartesianGrid stroke={GRID_C} vertical={false} />
+                      <XAxis dataKey="mes" tick={{ fill: TEXT_S, fontSize: 13 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false}
+                        tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`} width={58}
+                      />
+                      <Tooltip
+                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gastos']}
+                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                        itemStyle={{ color: '#e8edf8' }}
+                      />
+                      <Bar dataKey="monto" name="Gastos" fill="#f87171" radius={[6, 6, 0, 0]}>
+                        {gastosMensual.map((d, i) => (
+                          <Cell key={i} fill={i === gastosMensual.length - 1 ? '#fb923c' : 'rgba(248,113,113,0.5)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          )}
 
         </>
       )}

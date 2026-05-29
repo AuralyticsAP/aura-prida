@@ -3052,3 +3052,137 @@ body {
   color: #34d399;
   border: 1px solid rgba(52,211,153,0.25);
 }
+
+/* ══════════════════════════════════════════════════════════
+   GASTOS — Componente
+══════════════════════════════════════════════════════════ */
+.gasto-cat-badge {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Desglose por categoría dentro del historial */
+.gastos-breakdown-card {
+  padding: 16px 20px;
+}
+
+.gastos-breakdown-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(200,215,245,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.gastos-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gastos-breakdown-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 36px 110px;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.gastos-breakdown-label {
+  font-weight: 600;
+  color: #f4f6fc;
+  white-space: nowrap;
+}
+
+.gastos-breakdown-bar-wrap {
+  height: 8px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gastos-breakdown-bar {
+  height: 100%;
+  background: #f87171;
+  border-radius: 4px;
+  transition: width 0.6s ease;
+  min-width: 4px;
+}
+
+.gastos-breakdown-pct {
+  color: rgba(200,215,245,0.6);
+  font-size: 12px;
+  text-align: right;
+}
+
+.gastos-breakdown-monto {
+  font-weight: 700;
+  color: #f87171;
+  text-align: right;
+}
+
+/* ══════════════════════════════════════════════════════════
+   GASTOS — Dashboard
+══════════════════════════════════════════════════════════ */
+.db-gastos-header {
+  padding: 8px 0 4px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin-top: 8px;
+}
+
+.db-gastos-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f4f6fc;
+  margin: 0;
+}
+
+.db-gastos-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.db-gastos-kpi-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.db-gastos-kpi-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(200,215,245,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-gastos-kpi-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #f4f6fc;
+  line-height: 1.15;
+}
+
+.db-gastos-kpi-sub {
+  font-size: 12px;
+  color: rgba(200,215,245,0.45);
+  margin-top: 2px;
+}
+
+.db-gastos-kpi-danger { color: #f87171; }
+.db-gastos-kpi-ok     { color: #34d399; }
+
+@media (max-width: 600px) {
+  .gastos-breakdown-row {
+    grid-template-columns: 110px 1fr 32px 90px;
+  }
+  .db-gastos-kpi-row {
+    grid-template-columns: 1fr;
+  }
+}
