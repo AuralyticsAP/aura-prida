@@ -967,8 +967,12 @@ export default function Dashboard() {
     })
   }, [])
 
+  const [fetchError, setFetchError] = useState(null)
+
   const fetchReal = useCallback(async (fincaId, from, to, fromW, from4M) => {
     setLoading(true)
+    setFetchError(null)
+    try {
     const applyFinca = q => fincaId != null ? q.eq('finca_id', fincaId) : q
 
     const [
@@ -1039,6 +1043,11 @@ export default function Dashboard() {
     setAlertas(buildAlertas(cosArr, venW2, merArr, devArr))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
+  } catch (err) {
+    console.error('Dashboard fetchReal error:', err)
+    setFetchError(err?.message || 'Error al cargar el dashboard')
+    setLoading(false)
+  }
   }, [])
 
   useEffect(() => {
@@ -1164,6 +1173,17 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="loading-state">Cargando dashboard...</div>
+      ) : fetchError ? (
+        <div className="db-empty">
+          <div className="db-empty-icon">⚠️</div>
+          <h3>Error al cargar el dashboard</h3>
+          <p style={{ color: '#f87171', fontSize: 13, maxWidth: 480, textAlign: 'center' }}>{fetchError}</p>
+          <button className="btn-primary" style={{ marginTop: 16 }} onClick={() => {
+            const { from, to } = getDBRange(dbPeriodo, customDesde, customHasta)
+            const now = new Date(); const thirtyD = new Date(now); thirtyD.setDate(thirtyD.getDate() - 29)
+            fetchReal(fincaFilter, from, to, isoDate(thirtyD), isoDate(new Date(now.getFullYear(), now.getMonth() - 3, 1)))
+          }}>Reintentar</button>
+        </div>
       ) : (
         <>
           {/* ── Section 1: KPIs ── */}
