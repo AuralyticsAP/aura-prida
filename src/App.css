@@ -2828,6 +2828,30 @@ body {
   color: var(--gold-bright);
 }
 
+.reg-chip-red {
+  background: rgba(248,113,113,0.12);
+  border: 1px solid rgba(248,113,113,0.3);
+  color: #f87171;
+}
+
+/* ── Compras ── */
+.compras-section { display: flex; flex-direction: column; gap: 16px; }
+
+.compras-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 8px;
+}
+
+.compras-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 2px 0 0;
+  letter-spacing: -0.3px;
+}
+
 /* ── Fecha column ── */
 .reg-td-fecha {
   white-space: nowrap;

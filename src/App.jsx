@@ -11,6 +11,7 @@ import Proveedores from './components/Proveedores'
 import Usuarios from './components/Usuarios'
 import GestionProductos from './components/GestionProductos'
 import Dashboard from './components/Dashboard'
+import Compras from './components/Compras'
 import Login from './components/Login'
 import './App.css'
 
@@ -18,6 +19,7 @@ const ALL_TABS = [
   { id: 'cosecha',     label: 'Cosecha',     icon: '🌿' },
   { id: 'venta',       label: 'Venta',       icon: '💰' },
   { id: 'registros',   label: 'Registros',   icon: '📋' },
+  { id: 'compras',     label: 'Compras',     icon: '🛒' },
   { id: 'dashboard',   label: 'Dashboard',   icon: '📊' },
   { id: 'proveedores', label: 'Proveedores', icon: '🏭' },
   { id: 'catalogos',   label: 'Catálogos',   icon: '🥬', adminOnly: true },
@@ -284,6 +286,16 @@ export default function App() {
               {activeTab === 'registros' && (
                 <Registros
                   onRefresh={fetchData}
+                  canArchive={canArchive}
+                  canDelete={canDelete}
+                />
+              )}
+              {activeTab === 'compras' && (
+                <Compras
+                  fincas={fincas}
+                  session={session}
+                  showToast={showToast}
+                  canWrite={canWrite}
                   canArchive={canArchive}
                   canDelete={canDelete}
                 />

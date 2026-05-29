@@ -15,3 +15,12 @@ export const UNIDADES_PROVEEDOR = [
   'tamuga',
   'caja',
 ]
+
+export const UNIDADES_COMPRAS = [
+  'kg',
+  'unidades',
+  'cajas',
+  'rollo',
+  'tamuga',
+  'caja',
+]
