@@ -960,6 +960,7 @@ export default function Dashboard() {
 
   // Other
   const [hasData, setHasData] = useState(false)
+  const cacheRef = useRef({})
 
   useEffect(() => {
     supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
@@ -968,6 +969,21 @@ export default function Dashboard() {
   }, [])
 
   const fetchReal = useCallback(async (fincaId, from, to, fromW, from4M) => {
+    const cacheKey = `${fincaId ?? 'all'}-${from}-${to}`
+    const hit = cacheRef.current[cacheKey]
+    if (hit && Date.now() - hit.ts < 300000) {
+      const d = hit.d
+      setKpi(d.kpi); setWeeklyData(d.weeklyData); setDayData(d.dayData)
+      setProdData(d.prodData); setClientData(d.clientData); setStarProduct(d.starProduct)
+      setMermasSummary(d.mermasSummary); setPerdidas(d.perdidas); setLossAlerts(d.lossAlerts)
+      setGastosKPI(d.gastosKPI); setGastosByCategoria(d.gastosByCategoria)
+      setGastosVsIngresos(d.gastosVsIngresos); setGastosMensual(d.gastosMensual)
+      setComprasSummary(d.comprasSummary); setPersonalSummary(d.personalSummary)
+      setRentData(d.rentData); setPerfiles(d.perfiles); setAlertas(d.alertas)
+      setHasData(d.hasData)
+      return
+    }
+
     setLoading(true)
     const applyFinca = q => fincaId != null ? q.eq('finca_id', fincaId) : q
 
@@ -1012,32 +1028,37 @@ export default function Dashboard() {
     const provMap = {}
     ;(provsActive || []).forEach(p => { provMap[p.id] = p.nombre })
 
-    setKpi({
-      cosechas: cosArr.length,
-      ventas: venArr.length,
-      ingresos: totalIngresos,
-      gastos: totalGastos,
-      gananciaNeta: totalIngresos - totalGastos,
-      personalPromedio: persPromedio,
-    })
-    setWeeklyData(buildWeeklyData(venW2))
-    setDayData(buildDayOfWeekData(venW2))
-    setProdData(buildProductoData(cosW2, venW2))
-    setClientData(buildClienteData(venW2))
-    setStarProduct(buildStarProduct(venArr))
-    setMermasSummary(buildMermasSummary(merArr))
-    setPerdidas(buildPerdidasCombinadas(cosArr, merArr, devArr))
-    setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
-    setGastosKPI(buildGastosKPI(gasArr))
-    setGastosByCategoria(buildGastosByCategoria(gasArr))
-    setGastosVsIngresos(buildIngresosVsGastos(venArr, gasArr))
-    setGastosMensual(buildGastosMensuales(gasHistArr))
-    setComprasSummary(buildComprasSummary(compArr))
-    setPersonalSummary(buildPersonalSummary(persArr))
-    setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
-    setPerfiles(buildClientePerfiles(venW2))
-    setAlertas(buildAlertas(cosArr, venW2, merArr, devArr))
-    setHasData(cosArr.length > 0 || venArr.length > 0)
+    const cached = {
+      kpi:              { cosechas: cosArr.length, ventas: venArr.length, ingresos: totalIngresos, gastos: totalGastos, gananciaNeta: totalIngresos - totalGastos, personalPromedio: persPromedio },
+      weeklyData:       buildWeeklyData(venW2),
+      dayData:          buildDayOfWeekData(venW2),
+      prodData:         buildProductoData(cosW2, venW2),
+      clientData:       buildClienteData(venW2),
+      starProduct:      buildStarProduct(venArr),
+      mermasSummary:    buildMermasSummary(merArr),
+      perdidas:         buildPerdidasCombinadas(cosArr, merArr, devArr),
+      lossAlerts:       buildLossAlerts(cosArr, venArr, merArr),
+      gastosKPI:        buildGastosKPI(gasArr),
+      gastosByCategoria:buildGastosByCategoria(gasArr),
+      gastosVsIngresos: buildIngresosVsGastos(venArr, gasArr),
+      gastosMensual:    buildGastosMensuales(gasHistArr),
+      comprasSummary:   buildComprasSummary(compArr),
+      personalSummary:  buildPersonalSummary(persArr),
+      rentData:         buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr),
+      perfiles:         buildClientePerfiles(venW2),
+      alertas:          buildAlertas(cosArr, venW2, merArr, devArr),
+      hasData:          cosArr.length > 0 || venArr.length > 0,
+    }
+    cacheRef.current[cacheKey] = { ts: Date.now(), d: cached }
+
+    setKpi(cached.kpi); setWeeklyData(cached.weeklyData); setDayData(cached.dayData)
+    setProdData(cached.prodData); setClientData(cached.clientData); setStarProduct(cached.starProduct)
+    setMermasSummary(cached.mermasSummary); setPerdidas(cached.perdidas); setLossAlerts(cached.lossAlerts)
+    setGastosKPI(cached.gastosKPI); setGastosByCategoria(cached.gastosByCategoria)
+    setGastosVsIngresos(cached.gastosVsIngresos); setGastosMensual(cached.gastosMensual)
+    setComprasSummary(cached.comprasSummary); setPersonalSummary(cached.personalSummary)
+    setRentData(cached.rentData); setPerfiles(cached.perfiles); setAlertas(cached.alertas)
+    setHasData(cached.hasData)
     setLoading(false)
   }, [])
 
