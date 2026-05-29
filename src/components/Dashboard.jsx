@@ -1321,9 +1321,9 @@ export default function Dashboard() {
           </div>
 
           {/* ── Section 3: Pérdidas ── */}
-          {(perdidas.hasMermas || perdidas.hasDev || lossAlerts.length > 0) && (
+          <SectionHeader icon="⚠️" title="Pérdidas" sub="Mermas y devoluciones" />
+          {(perdidas.hasMermas || perdidas.hasDev || lossAlerts.length > 0) ? (
             <>
-              <SectionHeader icon="⚠️" title="Pérdidas" sub="Mermas y devoluciones" />
 
               {/* Alert banner if >10% */}
               {perdidas.showAlert && (
@@ -1461,12 +1461,16 @@ export default function Dashboard() {
                 </div>
               )}
             </>
+          ) : (
+            <div className="db-chart-card" style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <p style={{ color: 'rgba(200,215,245,0.4)', fontSize: 14 }}>Sin mermas ni devoluciones registradas en este período.</p>
+            </div>
           )}
 
           {/* ── Section 4: Gastos ── */}
-          {gastosKPI.count > 0 && (
+          <SectionHeader icon="💸" title="Gastos operativos" sub="Control financiero" />
+          {gastosKPI.count > 0 ? (
             <>
-              <SectionHeader icon="💸" title="Gastos operativos" sub="Control financiero" />
 
               <div className="db-gastos-kpi-row">
                 <div className="db-gastos-kpi-card">
@@ -1582,12 +1586,16 @@ export default function Dashboard() {
                 </div>
               )}
             </>
+          ) : (
+            <div className="db-chart-card" style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <p style={{ color: 'rgba(200,215,245,0.4)', fontSize: 14 }}>Sin gastos registrados en este período. Usá el módulo 💸 Gastos para registrar.</p>
+            </div>
           )}
 
           {/* ── Section 5: Compras ── */}
-          {comprasSummary.count > 0 && (
+          <SectionHeader icon="🛒" title="Compras a proveedores" sub="Insumos y materiales" />
+          {comprasSummary.count > 0 ? (
             <>
-              <SectionHeader icon="🛒" title="Compras a proveedores" sub="Insumos y materiales" />
 
               <div className="db-gastos-kpi-row">
                 <div className="db-gastos-kpi-card">
@@ -1643,12 +1651,16 @@ export default function Dashboard() {
                 </div>
               )}
             </>
+          ) : (
+            <div className="db-chart-card" style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <p style={{ color: 'rgba(200,215,245,0.4)', fontSize: 14 }}>Sin compras registradas en este período. Usá el módulo 🛒 Compras para registrar.</p>
+            </div>
           )}
 
           {/* ── Section 6: Personal ── */}
-          {personalSummary.totalPersonaDia > 0 && (
+          <SectionHeader icon="👷" title="Personal" sub="Gestión de mano de obra" />
+          {personalSummary.totalPersonaDia > 0 ? (
             <>
-              <SectionHeader icon="👷" title="Personal" sub="Gestión de mano de obra" />
 
               <div className="db-gastos-kpi-row">
                 <div className="db-gastos-kpi-card">
@@ -1743,6 +1755,10 @@ export default function Dashboard() {
                 </div>
               )}
             </>
+          ) : (
+            <div className="db-chart-card" style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <p style={{ color: 'rgba(200,215,245,0.4)', fontSize: 14 }}>Sin registros de personal en este período. Usá el módulo 👷 Personal para registrar.</p>
+            </div>
           )}
 
           {/* ── Section 7: Rentabilidad ── */}
@@ -1776,18 +1792,20 @@ export default function Dashboard() {
           </div>
 
           {/* ── Section 8: Alertas ── */}
-          {alertas.length > 0 && (
-            <>
-              <SectionHeader icon="🔔" title="Alertas" sub="Situaciones que requieren atención" />
-              <div className="db-alertas-list">
-                {alertas.map((a, i) => (
-                  <div key={i} className={`db-alerta-item db-alerta-${a.tipo}`}>
-                    <span className="db-alerta-icon">{a.icon}</span>
-                    <span className="db-alerta-msg">{a.msg}</span>
-                  </div>
-                ))}
-              </div>
-            </>
+          <SectionHeader icon="🔔" title="Alertas" sub="Situaciones que requieren atención" />
+          {alertas.length > 0 ? (
+            <div className="db-alertas-list">
+              {alertas.map((a, i) => (
+                <div key={i} className={`db-alerta-item db-alerta-${a.tipo}`}>
+                  <span className="db-alerta-icon">{a.icon}</span>
+                  <span className="db-alerta-msg">{a.msg}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="db-chart-card" style={{ textAlign: 'center', padding: '28px 16px' }}>
+              <p style={{ color: '#34d399', fontSize: 14, fontWeight: 600 }}>✅ Todo en orden — sin alertas activas en este período.</p>
+            </div>
           )}
 
           {/* ── Section 9: Perfil de Clientes ── */}
