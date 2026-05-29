@@ -643,6 +643,8 @@ function ClientePerfilesSection({ data }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [mode, setMode]               = useState('real')
+  const [fincaFilter, setFincaFilter] = useState(null) // null = ambas
+  const [fincas, setFincas]           = useState([])
   const [loading, setLoading]         = useState(false)
   const [kpi, setKpi]                 = useState({ cosechas: 0, ventas: 0, ingresos: 0 })
   const [weeklyData, setWeeklyData]   = useState([])
@@ -655,7 +657,13 @@ export default function Dashboard() {
   const [perfiles, setPerfiles]       = useState([])
   const [hasData, setHasData]         = useState(false)
 
-  const fetchReal = useCallback(async () => {
+  useEffect(() => {
+    supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
+      setFincas(data || [])
+    })
+  }, [])
+
+  const fetchReal = useCallback(async (fincaId = null) => {
     setLoading(true)
     const now      = new Date()
     const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -665,14 +673,16 @@ export default function Dashboard() {
     thirtyD.setDate(thirtyD.getDate() - 29) // 30-day window inclusive
     const fromW    = isoDate(thirtyD)
 
+    const applyFinca = (q) => fincaId != null ? q.eq('finca_id', fincaId) : q
+
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
       { data: prodsCost }, { data: ppData }, { data: provsActive },
     ] = await Promise.all([
-      supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to),
-      supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to),
-      supabase.from('cosechas').select('fecha,cantidad,producto').eq('estado','activo').gte('fecha',fromW).lte('fecha',to),
-      supabase.from('ventas').select('fecha,total,cantidad,producto,nombre_cliente').eq('estado','activo').gte('fecha',fromW).lte('fecha',to),
+      applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('cosechas').select('fecha,cantidad,producto').eq('estado','activo').gte('fecha',fromW).lte('fecha',to)),
+      applyFinca(supabase.from('ventas').select('fecha,total,cantidad,producto,nombre_cliente').eq('estado','activo').gte('fecha',fromW).lte('fecha',to)),
       supabase.from('productos').select('nombre,costo_produccion').eq('activo',true).not('costo_produccion','is',null),
       supabase.from('proveedor_productos').select('nombre,precio,proveedor_id'),
       supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
@@ -700,7 +710,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (mode === 'real') {
-      fetchReal()
+      fetchReal(fincaFilter)
     } else {
       setKpi(DEMO_KPI)
       setWeeklyData(DEMO_WEEKLY)
@@ -714,7 +724,7 @@ export default function Dashboard() {
       setHasData(true)
       setLoading(false)
     }
-  }, [mode, fetchReal])
+  }, [mode, fincaFilter, fetchReal])
 
   const totalClientes = clientData.reduce((s, r) => s + r.total, 0)
   const maxDay = dayData.length ? Math.max(...dayData.map(d => d.ventas)) : 1
@@ -738,6 +748,28 @@ export default function Dashboard() {
               Demo
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* ── Filtro finca ── */}
+      <div className="db-finca-bar">
+        <span className="db-finca-label">🌿 Finca:</span>
+        <div className="db-finca-pills">
+          <button
+            className={`db-finca-pill ${fincaFilter === null ? 'active' : ''}`}
+            onClick={() => setFincaFilter(null)}
+          >
+            Ambas
+          </button>
+          {fincas.map(f => (
+            <button
+              key={f.id}
+              className={`db-finca-pill ${fincaFilter === f.id ? 'active' : ''}`}
+              onClick={() => setFincaFilter(f.id)}
+            >
+              {f.nombre}
+            </button>
+          ))}
         </div>
       </div>
 

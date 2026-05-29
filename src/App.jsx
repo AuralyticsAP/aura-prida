@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import confetti from 'canvas-confetti'
 import logoPrida from './assets/logo-prida.png'
 import { supabase } from './lib/supabase'
@@ -40,12 +40,29 @@ export default function App() {
   const [ventas, setVentas] = useState([])
   const [productos, setProductos] = useState([])
   const [clientes, setClientes] = useState([])
+  const [fincas, setFincas] = useState([])
   const [loadingData, setLoadingData] = useState(true)
   const [toast, setToast] = useState(null)
 
+  const signOutExplicit = useRef(false)
+
+  const handleSignOut = useCallback(() => {
+    signOutExplicit.current = true
+    supabase.auth.signOut()
+  }, [])
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' && !signOutExplicit.current) {
+        // Refresh de token falló en background — verificar si la sesión sigue válida
+        // antes de expulsar al usuario
+        supabase.auth.getSession().then(({ data }) => setSession(data.session))
+        return
+      }
+      if (event === 'SIGNED_OUT') signOutExplicit.current = false
+      setSession(session)
+    })
     return () => subscription.unsubscribe()
   }, [])
 
@@ -57,9 +74,11 @@ export default function App() {
     Promise.all([
       supabase.from('productos').select('nombre').eq('activo', true).order('orden', { ascending: true }),
       supabase.from('clientes').select('nombre').eq('activo', true).order('orden', { ascending: true }),
-    ]).then(([{ data: p }, { data: c }]) => {
+      supabase.from('fincas').select('id,nombre').eq('activo', true).order('id', { ascending: true }),
+    ]).then(([{ data: p }, { data: c }, { data: f }]) => {
       setProductos((p || []).map(x => x.nombre))
       setClientes((c || []).map(x => x.nombre))
+      setFincas(f || [])
     })
   }, [])
 
@@ -169,7 +188,7 @@ export default function App() {
             Tu cuenta ha sido <strong style={{ color: '#f87171' }}>desactivada</strong>.<br />
             Contactá al administrador del sistema.
           </p>
-          <button className="btn-danger" onClick={() => supabase.auth.signOut()}>
+          <button className="btn-danger" onClick={handleSignOut}>
             Cerrar sesión
           </button>
         </div>
@@ -204,7 +223,7 @@ export default function App() {
               <span>by</span>
               <strong>AuralyticsAP</strong>
             </div>
-            <button className="btn-logout" onClick={() => supabase.auth.signOut()} title="Cerrar sesión">
+            <button className="btn-logout" onClick={handleSignOut} title="Cerrar sesión">
               Salir
             </button>
           </div>
@@ -254,12 +273,12 @@ export default function App() {
             <>
               {activeTab === 'cosecha' && (
                 canWrite
-                  ? <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} session={session} />
+                  ? <FormCosecha onSuccess={handleCosechaSuccess} productos={productos} fincas={fincas} session={session} />
                   : <SinPermiso mensaje="No tienes permiso para registrar cosechas." />
               )}
               {activeTab === 'venta' && (
                 canWrite
-                  ? <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} session={session} />
+                  ? <FormVenta onSuccess={handleVentaSuccess} productos={productos} clientes={clientes} fincas={fincas} session={session} />
                   : <SinPermiso mensaje="No tienes permiso para registrar ventas." />
               )}
               {activeTab === 'registros' && (

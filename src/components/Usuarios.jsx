@@ -62,6 +62,7 @@ export default function Usuarios({ session, showToast }) {
     setAdding(true)
     const email = addForm.email.trim().toLowerCase()
 
+    // Verificar si el usuario ya existe en profiles
     const { data: existing } = await supabase
       .from('profiles')
       .select('id')
@@ -69,29 +70,28 @@ export default function Usuarios({ session, showToast }) {
       .maybeSingle()
 
     if (existing) {
+      // Usuario ya existe: solo actualizar rol
       const { error } = await supabase
         .from('user_roles')
         .upsert({ user_id: existing.id, role: addForm.role, activo: true }, { onConflict: 'user_id' })
       if (error) { showToast('Error: ' + error.message, 'error'); setAdding(false); return }
       showToast('✅ Rol asignado al usuario existente')
     } else {
+      // Usuario nuevo: usar Edge Function para no afectar la sesión del admin
       if (!addForm.password) {
         showToast('Ingresá una contraseña para el usuario nuevo', 'error')
         setAdding(false)
         return
       }
-      const { data, error } = await supabase.auth.signUp({ email, password: addForm.password })
-      if (error) { showToast('Error: ' + error.message, 'error'); setAdding(false); return }
-      if (data.user) {
-        await Promise.all([
-          supabase.from('profiles').upsert({ id: data.user.id, email }, { onConflict: 'id' }),
-          supabase.from('user_roles').upsert(
-            { user_id: data.user.id, role: addForm.role, activo: true },
-            { onConflict: 'user_id' }
-          ),
-        ])
-        showToast('✅ Usuario creado. Recibirá email de confirmación.')
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: { email, password: addForm.password, role: addForm.role },
+      })
+      if (error || data?.error) {
+        showToast('Error: ' + (data?.error ?? error.message), 'error')
+        setAdding(false)
+        return
       }
+      showToast('✅ Usuario creado. Ya puede iniciar sesión.')
     }
 
     setAdding(false)
@@ -157,7 +157,7 @@ export default function Usuarios({ session, showToast }) {
             </div>
             <p className="add-user-note">
               💡 Si el correo ya tiene cuenta, solo se actualiza el rol (contraseña ignorada).
-              El usuario nuevo recibirá un email de confirmación.
+              El usuario nuevo podrá iniciar sesión de inmediato con la contraseña indicada.
             </p>
             <button type="submit" className="btn-primary" disabled={adding}>
               {adding ? 'Procesando...' : 'Guardar usuario'}

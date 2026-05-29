@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { UNIDADES } from '../lib/constants'
 
 const initialState = {
+  finca_id: '',
   producto: '',
   cantidad: '',
   unidad: 'kg',
@@ -12,7 +13,7 @@ const initialState = {
   notas: '',
 }
 
-export default function FormVenta({ onSuccess, productos = [], clientes = [], session }) {
+export default function FormVenta({ onSuccess, productos = [], clientes = [], fincas = [], session }) {
   const [form, setForm] = useState(initialState)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -31,7 +32,7 @@ export default function FormVenta({ onSuccess, productos = [], clientes = [], se
   const handleSubmit = async e => {
     e.preventDefault()
 
-    if (!form.producto || !form.cantidad || !form.unidad || !form.cliente || !form.precio_unitario) {
+    if (!form.finca_id || !form.producto || !form.cantidad || !form.unidad || !form.cliente || !form.precio_unitario) {
       setError('Por favor completá todos los campos obligatorios.')
       return
     }
@@ -46,6 +47,7 @@ export default function FormVenta({ onSuccess, productos = [], clientes = [], se
     setError(null)
 
     const { error: dbError } = await supabase.from('ventas').insert([{
+      finca_id: parseInt(form.finca_id),
       producto: form.producto,
       cantidad: parseFloat(form.cantidad),
       unidad: form.unidad,
@@ -76,6 +78,16 @@ export default function FormVenta({ onSuccess, productos = [], clientes = [], se
       </div>
 
       <form onSubmit={handleSubmit} className="form">
+        <div className="form-group">
+          <label>Finca *</label>
+          <select name="finca_id" value={form.finca_id} onChange={handleChange} required>
+            <option value="">Seleccioná una finca</option>
+            {fincas.map(f => (
+              <option key={f.id} value={f.id}>{f.nombre}</option>
+            ))}
+          </select>
+        </div>
+
         <div className="form-group">
           <label>Producto *</label>
           <select name="producto" value={form.producto} onChange={handleChange} required>

@@ -1729,6 +1729,52 @@ body {
   font-weight: 700;
 }
 
+/* Finca filter bar */
+.db-finca-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0 4px;
+  flex-wrap: wrap;
+}
+
+.db-finca-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(200,215,245,0.55);
+  white-space: nowrap;
+}
+
+.db-finca-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.db-finca-pill {
+  padding: 6px 16px;
+  border: 1px solid rgba(200,168,75,0.30);
+  border-radius: 28px;
+  background: transparent;
+  color: rgba(200,215,245,0.65);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+
+.db-finca-pill:hover {
+  border-color: rgba(200,168,75,0.60);
+  color: #e8ddb0;
+}
+
+.db-finca-pill.active {
+  background: rgba(200,168,75,0.18);
+  border-color: #c8a84b;
+  color: #c8a84b;
+  font-weight: 700;
+}
+
 /* Empty state */
 .db-empty {
   background: #0d1b2e;

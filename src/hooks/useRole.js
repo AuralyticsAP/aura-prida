@@ -16,15 +16,19 @@ export function useRole(session) {
       .from('user_roles')
       .select('role, activo')
       .eq('user_id', session.user.id)
-      .single()
-      .then(({ data }) => {
-        if (!data) {
-          setRole('viewer') // sin entrada = viewer por defecto
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setRole('viewer')
         } else if (!data.activo) {
           setRole('__deactivated__')
         } else {
           setRole(data.role ?? 'viewer')
         }
+        setLoading(false)
+      })
+      .catch(() => {
+        setRole('viewer')
         setLoading(false)
       })
   }, [session])
