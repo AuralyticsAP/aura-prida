@@ -3262,7 +3262,10 @@ body {
 .db-alerta-danger  { background: rgba(248,113,113,0.08); border-color: #f87171; }
 .db-alerta-warning { background: rgba(251,146,60,0.08);  border-color: #fb923c; }
 .db-alerta-info    { background: rgba(56,189,248,0.08);  border-color: #38bdf8; }
-/* ── KPI grid 6 cols ── */
-.db-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-@media (min-width: 900px) { .db-kpi-grid { grid-template-columns: repeat(6, 1fr); } }
-@media (max-width: 600px) { .db-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+/* ── KPI grid — 3 cols base, 6 cols en pantallas muy anchas ── */
+@media (min-width: 1400px) {
+  .db-kpi-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .db-kpi-value { font-size: 22px; letter-spacing: -0.5px; }
+  .db-kpi-card  { padding: 20px 14px 16px; }
+  .db-kpi-icon  { font-size: 22px; }
+}
