@@ -329,7 +329,7 @@ body {
   padding: 11px 14px;
   border: 1px solid rgba(255,255,255,0.14);
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 16px; /* mínimo 16px para evitar auto-zoom en iOS Safari */
   color: var(--text-primary);
   background: rgba(255,255,255,0.07);
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
