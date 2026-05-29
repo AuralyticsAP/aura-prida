@@ -21,6 +21,42 @@ const PIE_COLORS = [
   '#a78bfa', '#fb923c', '#38bdf8', '#f472b6',
 ]
 
+const GASTO_COLORS = {
+  combustible:   '#f59e0b',
+  fertilizantes: '#34d399',
+  herramientas:  '#60a5fa',
+  salarios:      '#c084fc',
+  transporte:    '#fb923c',
+  servicios:     '#38bdf8',
+  otro:          '#94a3b8',
+}
+
+const LABOR_COLORS = {
+  cosecha:       '#34d399',
+  siembra:       '#c8a84b',
+  mantenimiento: '#60a5fa',
+  empaque:       '#c084fc',
+  otro:          '#94a3b8',
+}
+
+const CATEGORIA_LABELS = {
+  combustible:   '⛽ Combustible',
+  fertilizantes: '🌱 Fertilizantes',
+  herramientas:  '🔧 Herramientas',
+  salarios:      '👷 Salarios',
+  transporte:    '🚚 Transporte',
+  servicios:     '💡 Servicios',
+  otro:          '📌 Otro',
+}
+
+const LABOR_LABELS = {
+  cosecha:       '🌿 Cosecha',
+  siembra:       '🌱 Siembra',
+  mantenimiento: '🔧 Mantenimiento',
+  empaque:       '📦 Empaque',
+  otro:          '📌 Otro',
+}
+
 // Mon-Sun order for the bar chart (Latin America standard)
 const DIAS_SEMANA = [
   { key: 1, label: 'Lun' },
@@ -32,7 +68,20 @@ const DIAS_SEMANA = [
   { key: 0, label: 'Dom' },
 ]
 
+const PERIODOS_DB = [
+  { id: 'hoy',        label: 'Hoy' },
+  { id: 'semana',     label: 'Esta semana' },
+  { id: 'mes',        label: 'Este mes' },
+  { id: 'ultimo_mes', label: 'Último mes' },
+  { id: 'custom',     label: 'Personalizado' },
+]
+
 // ── Demo data ─────────────────────────────────────────────────────────────────
+const DEMO_KPI_EXTENDED = {
+  cosechas: 158, ventas: 94, ingresos: 2850000,
+  gastos: 1470000, gananciaNeta: 1380000, personalPromedio: 7,
+}
+
 const DEMO_WEEKLY = [
   { semana: '5 may',  ingresos: 620000 },
   { semana: '12 may', ingresos: 810000 },
@@ -51,93 +100,49 @@ const DEMO_DAYS = [
 ]
 
 const DEMO_PRODUCTOS = [
-  { producto: 'Tomate',    cosechado: 480, vendido: 460 },
-  { producto: 'Zucchini',  cosechado: 320, vendido: 160 },
-  { producto: 'Lechuga',   cosechado: 290, vendido: 275 },
-  { producto: 'Zanahoria', cosechado: 210, vendido: 200 },
-  { producto: 'Espinaca',  cosechado: 180, vendido: 170 },
-  { producto: 'Perejil',   cosechado: 150, vendido: 148 },
-  { producto: 'Remolacha', cosechado: 130, vendido: 125 },
+  { producto: 'Lechuga',   cosechado: 480, vendido: 420 },
+  { producto: 'Tomate',    cosechado: 380, vendido: 340 },
+  { producto: 'Zanahoria', cosechado: 290, vendido: 275 },
+  { producto: 'Zucchini',  cosechado: 260, vendido: 185 },
+  { producto: 'Apio',      cosechado: 180, vendido: 170 },
+  { producto: 'Espinaca',  cosechado: 150, vendido: 145 },
 ]
 
 const DEMO_CLIENTES = [
-  { nombre: 'Walmart',        total: 850000 },
-  { nombre: 'Automercado',    total: 620000 },
-  { nombre: 'Mega Súper',     total: 480000 },
-  { nombre: 'BM Súper',       total: 380000 },
-  { nombre: 'Perimercados',   total: 280000 },
-  { nombre: 'Mercado Cenada', total: 150000 },
-  { nombre: 'Frumusa',        total: 55000  },
-  { nombre: 'Cruceros',       total: 35000  },
+  { nombre: 'Walmart',      total: 850000 },
+  { nombre: 'Automercado',  total: 620000 },
+  { nombre: 'Mega Súper',   total: 480000 },
+  { nombre: 'BM Súper',     total: 380000 },
+  { nombre: 'Perimercados', total: 280000 },
+  { nombre: 'Frumusa',      total: 150000 },
 ]
 
-const DEMO_PERFILES = [
-  {
-    cliente: 'Walmart',
-    favorito: 'Lechuga',
-    totalKg: 800,
-    totalIngresos: 1240000,
-    ultimaCompra: '2026-05-22',
-    productos: [
-      { nombre: 'Lechuga',   kg: 450, ingresos: 630000 },
-      { nombre: 'Tomate',    kg: 200, ingresos: 380000 },
-      { nombre: 'Zanahoria', kg: 150, ingresos: 230000 },
-    ],
-  },
-  {
-    cliente: 'Automercado',
-    favorito: 'Tomate',
-    totalKg: 400,
-    totalIngresos: 820000,
-    ultimaCompra: '2026-05-24',
-    productos: [
-      { nombre: 'Tomate',   kg: 300, ingresos: 570000 },
-      { nombre: 'Zucchini', kg: 100, ingresos: 250000 },
-    ],
-  },
-  {
-    cliente: 'Frumusa',
-    favorito: 'Lechuga',
-    totalKg: 280,
-    totalIngresos: 420000,
-    ultimaCompra: '2026-05-20',
-    productos: [
-      { nombre: 'Lechuga', kg: 200, ingresos: 280000 },
-      { nombre: 'Apio',    kg: 80,  ingresos: 140000 },
-    ],
-  },
-  {
-    cliente: 'Mega Súper',
-    favorito: 'Zanahoria',
-    totalKg: 220,
-    totalIngresos: 310000,
-    ultimaCompra: '2026-05-18',
-    productos: [
-      { nombre: 'Zanahoria', kg: 220, ingresos: 310000 },
-    ],
-  },
-]
-
-const DEMO_STAR   = { producto: 'Tomate', vendido: 460, ingresos: 920000, pct: 34 }
-const DEMO_KPI    = { cosechas: 158, ventas: 94, ingresos: 2850000 }
-const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 320, vendido: 160, mermaKg: 85, sinDestino: 75, pct: 23 }]
+const DEMO_STAR   = { producto: 'Lechuga', vendido: 420, ingresos: 756000, pct: 38 }
+const DEMO_LOSSES = [{ producto: 'Zucchini', cosechado: 260, vendido: 185, mermaKg: 40, sinDestino: 35, pct: 13 }]
 const DEMO_MERMAS_SUMMARY = [
-  { producto: 'Zucchini', cantidad: 85 },
-  { producto: 'Tomate',   cantidad: 30 },
+  { producto: 'Lechuga', cantidad: 45 },
+  { producto: 'Tomate',  cantidad: 30 },
 ]
-const DEMO_DEVOLUCIONES = { count: 5, perdida: 45000, reingreso: 18000 }
+const DEMO_DEVOLUCIONES = { count: 3, perdida: 45000, reingreso: 18000 }
+const DEMO_PERDIDAS = {
+  totalMermasKg: 75, totalDevPerdida: 45000, pctPerdida: 8, showAlert: false,
+  byProducto: [{ producto: 'Lechuga', cantidad: 45 }, { producto: 'Tomate', cantidad: 30 }],
+  devByCliente: [{ cliente: 'Walmart', total: 32000 }, { cliente: 'Automercado', total: 13000 }],
+  hasMermas: true, hasDev: true,
+}
 
-const DEMO_GASTOS_KPI        = { total: 485000, count: 12 }
+const DEMO_GASTOS_KPI        = { total: 1470000, count: 28 }
 const DEMO_GASTOS_CATEGORIA  = [
-  { categoria: 'salarios',      monto: 180000 },
-  { categoria: 'fertilizantes', monto: 120000 },
-  { categoria: 'combustible',   monto: 85000  },
-  { categoria: 'transporte',    monto: 60000  },
-  { categoria: 'servicios',     monto: 40000  },
+  { categoria: 'salarios',      monto: 480000 },
+  { categoria: 'fertilizantes', monto: 320000 },
+  { categoria: 'combustible',   monto: 280000 },
+  { categoria: 'transporte',    monto: 200000 },
+  { categoria: 'servicios',     monto: 120000 },
+  { categoria: 'herramientas',  monto: 70000  },
 ]
 const DEMO_GASTOS_VS_INGRESOS = [
-  { finca: 'Dulce Nombre', ingresos: 1800000, gastos: 280000 },
-  { finca: 'Taras',        ingresos: 1050000, gastos: 205000 },
+  { finca: 'Dulce Nombre', ingresos: 1800000, gastos: 850000 },
+  { finca: 'Taras',        ingresos: 1050000, gastos: 620000 },
 ]
 const DEMO_GASTOS_MENSUAL = [
   { mes: 'feb 26', monto: 380000 },
@@ -146,44 +151,84 @@ const DEMO_GASTOS_MENSUAL = [
   { mes: 'may 26', monto: 485000 },
 ]
 
+const DEMO_COMPRAS = {
+  total: 320000, count: 18,
+  topProveedor: { nombre: 'Dist. Agro Sur', total: 145000 },
+  topProducto:  { nombre: 'Abono foliar',   total: 95000  },
+  byFinca: [
+    { finca: 'Dulce Nombre', total: 185000 },
+    { finca: 'Taras',        total: 135000 },
+  ],
+}
+
+const DEMO_PERSONAL = {
+  totalPersonaDia: 420, promedioDia: 7,
+  byLabor: [
+    { tipo: 'cosecha',       total: 180 },
+    { tipo: 'empaque',       total: 120 },
+    { tipo: 'mantenimiento', total: 80  },
+    { tipo: 'siembra',       total: 40  },
+  ],
+  byFinca: [
+    { finca: 'Dulce Nombre', total: 240, dias: 30, promedio: 8 },
+    { finca: 'Taras',        total: 180, dias: 30, promedio: 6 },
+  ],
+  topDia: ['2026-05-15', 22],
+}
+
 const DEMO_RENT = [
   {
-    producto: 'Zanahoria',
-    costoPropio: 800,
-    costoProveedor: 500,
-    mejorProveedor: 'Dist. Agro Sur',
-    precioVenta: 1100,
-    gananciaPropia: 300,
-    gananciaCompra: 600,
-    recomendacion: 'comprar',
+    producto: 'Zanahoria', costoPropio: 800, costoProveedor: 500,
+    mejorProveedor: 'Dist. Agro Sur', precioVenta: 1100,
+    gananciaPropia: 300, gananciaCompra: 600, recomendacion: 'comprar',
   },
   {
-    producto: 'Lechuga',
-    costoPropio: 300,
-    costoProveedor: 450,
-    mejorProveedor: 'Semillas CR',
-    precioVenta: 900,
-    gananciaPropia: 600,
-    gananciaCompra: 450,
-    recomendacion: 'sembrar',
+    producto: 'Lechuga', costoPropio: 300, costoProveedor: 450,
+    mejorProveedor: 'Semillas CR', precioVenta: 900,
+    gananciaPropia: 600, gananciaCompra: 450, recomendacion: 'sembrar',
   },
   {
-    producto: 'Tomate',
-    costoPropio: 600,
-    costoProveedor: 580,
-    mejorProveedor: 'Agro Tico',
-    precioVenta: 1250,
-    gananciaPropia: 650,
-    gananciaCompra: 670,
-    recomendacion: 'indiferente',
+    producto: 'Tomate', costoPropio: 600, costoProveedor: 580,
+    mejorProveedor: 'Agro Tico', precioVenta: 1250,
+    gananciaPropia: 650, gananciaCompra: 670, recomendacion: 'indiferente',
   },
+]
+
+const DEMO_PERFILES = [
+  {
+    cliente: 'Walmart', favorito: 'Lechuga', totalKg: 800, totalIngresos: 1240000, ultimaCompra: '2026-05-22',
+    productos: [
+      { nombre: 'Lechuga',   kg: 450, ingresos: 630000 },
+      { nombre: 'Tomate',    kg: 200, ingresos: 380000 },
+      { nombre: 'Zanahoria', kg: 150, ingresos: 230000 },
+    ],
+  },
+  {
+    cliente: 'Automercado', favorito: 'Tomate', totalKg: 400, totalIngresos: 820000, ultimaCompra: '2026-05-24',
+    productos: [
+      { nombre: 'Tomate',   kg: 300, ingresos: 570000 },
+      { nombre: 'Zucchini', kg: 100, ingresos: 250000 },
+    ],
+  },
+  {
+    cliente: 'Frumusa', favorito: 'Lechuga', totalKg: 280, totalIngresos: 420000, ultimaCompra: '2026-05-20',
+    productos: [
+      { nombre: 'Lechuga', kg: 200, ingresos: 280000 },
+      { nombre: 'Apio',    kg: 80,  ingresos: 140000 },
+    ],
+  },
+]
+
+const DEMO_ALERTAS = [
+  { tipo: 'warning', icon: '📦', msg: 'Zucchini: 35 kg sin destino registrado (13% de lo cosechado)' },
+  { tipo: 'info',    icon: '👥', msg: 'Frumusa no ha comprado en los últimos 14 días' },
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Use LOCAL date to avoid UTC offset shifting the day in Costa Rica (UTC-6)
 function isoDate(d) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const y   = d.getFullYear()
+  const m   = String(d.getMonth() + 1).padStart(2, '0')
   const day = String(d.getDate()).padStart(2, '0')
   return `${y}-${m}-${day}`
 }
@@ -206,6 +251,29 @@ function weekLabel(ws) {
   return ws.toLocaleDateString('es-CR', { month: 'short', day: 'numeric' })
 }
 
+function getDBRange(periodo, customDesde, customHasta) {
+  const now = new Date()
+  const hoy = isoDate(now)
+  switch (periodo) {
+    case 'hoy': return { from: hoy, to: hoy }
+    case 'semana': {
+      const s = new Date(now)
+      const day = s.getDay()
+      s.setDate(s.getDate() + (day === 0 ? -6 : 1 - day))
+      return { from: isoDate(s), to: hoy }
+    }
+    case 'mes':
+      return { from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)), to: hoy }
+    case 'ultimo_mes': {
+      const s = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const e = new Date(now.getFullYear(), now.getMonth(), 0)
+      return { from: isoDate(s), to: isoDate(e) }
+    }
+    case 'custom': return { from: customDesde || hoy, to: customHasta || hoy }
+    default: return { from: isoDate(new Date(now.getFullYear(), now.getMonth(), 1)), to: hoy }
+  }
+}
+
 function buildWeeklyData(ventas) {
   const today = new Date()
   const weeks = Array.from({ length: 4 }, (_, i) => {
@@ -224,10 +292,8 @@ function buildWeeklyData(ventas) {
 }
 
 function buildDayOfWeekData(ventas) {
-  // totals indexed 0 (Dom) to 6 (Sáb)
   const totals = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 }
   ventas.forEach(r => {
-    // .slice(0,10) handles both "YYYY-MM-DD" and "YYYY-MM-DDTHH:mm:ss+00:00" formats
     const fechaStr = (r.fecha || '').slice(0, 10)
     if (fechaStr.length < 10) return
     const day = new Date(fechaStr + 'T12:00:00').getDay()
@@ -306,26 +372,6 @@ function buildClientePerfiles(ventas) {
       return { cliente: c.cliente, productos: prods, favorito, totalKg, totalIngresos: Math.round(c.totalIngresos), ultimaCompra: c.ultimaCompra }
     })
     .sort((a, b) => b.totalIngresos - a.totalIngresos)
-}
-
-const CATEGORIA_LABELS = {
-  combustible:   '⛽ Combustible',
-  fertilizantes: '🌱 Fertilizantes',
-  herramientas:  '🔧 Herramientas',
-  salarios:      '👷 Salarios',
-  transporte:    '🚚 Transporte',
-  servicios:     '💡 Servicios',
-  otro:          '📌 Otro',
-}
-
-const GASTO_COLORS = {
-  combustible:   '#f59e0b',
-  fertilizantes: '#34d399',
-  herramientas:  '#60a5fa',
-  salarios:      '#c084fc',
-  transporte:    '#fb923c',
-  servicios:     '#38bdf8',
-  otro:          '#94a3b8',
 }
 
 function buildGastosKPI(gastos) {
@@ -418,7 +464,6 @@ function buildLossAlerts(cosechas, ventas, mermas = []) {
 }
 
 function buildRentabilidad(prodsCost, ppData, provMap, ventas) {
-  // Mapa de mejor precio de proveedor por nombre de producto (case-insensitive)
   const bestProv = {}
   ppData.forEach(item => {
     const provNombre = provMap[item.proveedor_id]
@@ -429,7 +474,6 @@ function buildRentabilidad(prodsCost, ppData, provMap, ventas) {
     }
   })
 
-  // Mapa de precio de venta promedio por producto
   const ventaMap = {}
   ventas.forEach(v => {
     const key = v.producto.toLowerCase().trim()
@@ -484,6 +528,112 @@ function buildRentabilidad(prodsCost, ppData, provMap, ventas) {
       const order = { comprar: 0, indiferente: 1, sembrar: 2 }
       return order[a.recomendacion] - order[b.recomendacion]
     })
+}
+
+// ── NEW build functions ───────────────────────────────────────────────────────
+function buildPerdidasCombinadas(cosechas, mermas, devoluciones) {
+  const totalMermasKg = mermas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0)
+  const byProducto = {}
+  mermas.forEach(r => { byProducto[r.producto] = (byProducto[r.producto] || 0) + parseFloat(r.cantidad || 0) })
+  const byProductoArr = Object.entries(byProducto)
+    .map(([producto, cantidad]) => ({ producto, cantidad: Math.round(cantidad * 10) / 10 }))
+    .sort((a, b) => b.cantidad - a.cantidad)
+  const devPerdida = devoluciones.filter(r => !r.puede_revenderse)
+  const totalDevPerdida = devPerdida.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+  const clienteMap = {}
+  devPerdida.forEach(r => { clienteMap[r.cliente] = (clienteMap[r.cliente] || 0) + parseFloat(r.total || 0) })
+  const devByCliente = Object.entries(clienteMap)
+    .map(([cliente, total]) => ({ cliente, total: Math.round(total) }))
+    .sort((a, b) => b.total - a.total)
+  const totalProduccion = cosechas.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0)
+  const pctPerdida = totalProduccion > 0 ? Math.round((totalMermasKg / totalProduccion) * 100) : 0
+  return {
+    totalMermasKg:  Math.round(totalMermasKg * 10) / 10,
+    totalDevPerdida: Math.round(totalDevPerdida),
+    pctPerdida,
+    showAlert: pctPerdida > 10,
+    byProducto: byProductoArr,
+    devByCliente,
+    hasMermas: mermas.length > 0,
+    hasDev: devPerdida.length > 0,
+  }
+}
+
+function buildComprasSummary(compras) {
+  const total = compras.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+  const provMap = {}, prodMap = {}, fincaMap = {}
+  compras.forEach(r => {
+    const prov = r.proveedores?.nombre || 'Sin proveedor'
+    provMap[prov] = (provMap[prov] || 0) + parseFloat(r.total || 0)
+    prodMap[r.producto] = (prodMap[r.producto] || 0) + parseFloat(r.total || 0)
+    const finca = r.fincas?.nombre || 'Sin finca'
+    fincaMap[finca] = (fincaMap[finca] || 0) + parseFloat(r.total || 0)
+  })
+  const topProv = Object.entries(provMap).sort((a, b) => b[1] - a[1])[0]
+  const topProd = Object.entries(prodMap).sort((a, b) => b[1] - a[1])[0]
+  const byFinca = Object.entries(fincaMap).map(([finca, t]) => ({ finca, total: Math.round(t) }))
+  return {
+    total: Math.round(total),
+    count: compras.length,
+    topProveedor: topProv ? { nombre: topProv[0], total: Math.round(topProv[1]) } : null,
+    topProducto:  topProd ? { nombre: topProd[0], total: Math.round(topProd[1]) } : null,
+    byFinca,
+  }
+}
+
+function buildPersonalSummary(personal) {
+  const totalPersonaDia = personal.reduce((s, r) => s + (r.cantidad_personas || 0), 0)
+  const laborMap = {}, fincaPersona = {}, fincaDias = {}
+  personal.forEach(r => {
+    laborMap[r.tipo_labor] = (laborMap[r.tipo_labor] || 0) + (r.cantidad_personas || 0)
+    const f = r.fincas?.nombre || 'Sin finca'
+    fincaPersona[f] = (fincaPersona[f] || 0) + (r.cantidad_personas || 0)
+    if (!fincaDias[f]) fincaDias[f] = new Set()
+    fincaDias[f].add(r.fecha)
+  })
+  const byLabor = Object.entries(laborMap).map(([tipo, total]) => ({ tipo, total })).sort((a, b) => b.total - a.total)
+  const byFinca = Object.entries(fincaPersona).map(([finca, total]) => {
+    const dias = fincaDias[finca]?.size || 1
+    return { finca, total, dias, promedio: Math.round((total / dias) * 10) / 10 }
+  })
+  const diaMap = {}
+  personal.forEach(r => { diaMap[r.fecha] = (diaMap[r.fecha] || 0) + (r.cantidad_personas || 0) })
+  const topDia = Object.entries(diaMap).sort((a, b) => b[1] - a[1])[0]
+  const totalDias = new Set(personal.map(r => r.fecha)).size
+  const promedioDia = totalDias > 0 ? Math.round((totalPersonaDia / totalDias) * 10) / 10 : 0
+  return { totalPersonaDia, promedioDia, byLabor, byFinca, topDia }
+}
+
+function buildAlertas(cosArr, venW2, merArr, devArr) {
+  const alertas = []
+  // Mermas > 10%
+  const totalCos = cosArr.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0)
+  const totalMer = merArr.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0)
+  if (totalCos > 0 && totalMer / totalCos > 0.10)
+    alertas.push({ tipo: 'danger', icon: '⚠️', msg: `Mermas al ${Math.round((totalMer / totalCos) * 100)}% de la producción — supera el límite del 10%` })
+  // Producto sin destino
+  const venMap = {}, cosMap = {}, merMap = {}
+  cosArr.forEach(r => { cosMap[r.producto] = (cosMap[r.producto] || 0) + parseFloat(r.cantidad || 0) })
+  venW2.forEach(r  => { venMap[r.producto] = (venMap[r.producto] || 0) + parseFloat(r.cantidad || 0) })
+  merArr.forEach(r => { merMap[r.producto] = (merMap[r.producto] || 0) + parseFloat(r.cantidad || 0) })
+  Object.entries(cosMap).forEach(([p, c]) => {
+    const sin = c - (venMap[p] || 0) - (merMap[p] || 0)
+    if (c > 10 && sin > 0 && sin / c > 0.20)
+      alertas.push({ tipo: 'warning', icon: '📦', msg: `${p}: ${Math.round(sin)} kg sin destino (${Math.round((sin / c) * 100)}% de lo cosechado)` })
+  })
+  // Cliente sin comprar 14d
+  const now = new Date(); const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - 14)
+  const cutStr = cutoff.toISOString().split('T')[0]
+  const recent = new Set(venW2.filter(r => r.fecha >= cutStr).map(r => r.nombre_cliente))
+  const allC   = new Set(venW2.map(r => r.nombre_cliente))
+  allC.forEach(c => { if (!recent.has(c)) alertas.push({ tipo: 'info', icon: '👥', msg: `${c} no ha comprado en los últimos 14 días` }) })
+  // Dev mismo cliente >= 2
+  const devMap = {}
+  devArr.forEach(r => { if (!r.puede_revenderse) devMap[r.cliente] = (devMap[r.cliente] || 0) + 1 })
+  Object.entries(devMap).forEach(([c, n]) => {
+    if (n >= 2) alertas.push({ tipo: 'warning', icon: '↩️', msg: `${c} tiene ${n} devoluciones sin reingreso en el período` })
+  })
+  return alertas.slice(0, 8)
 }
 
 // ── Tooltips ──────────────────────────────────────────────────────────────────
@@ -570,11 +720,21 @@ function StarProductCard({ star }) {
   )
 }
 
+// ── Section Header ────────────────────────────────────────────────────────────
+function SectionHeader({ icon, title, sub }) {
+  return (
+    <div style={{ paddingBottom: 4, borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: 16, marginTop: 8 }}>
+      <p className="db-header-eyebrow">{sub}</p>
+      <h3 style={{ fontSize: 20, fontWeight: 800, color: '#f4f6fc', margin: 0 }}>{icon} {title}</h3>
+    </div>
+  )
+}
+
 // ── Rentabilidad section ──────────────────────────────────────────────────────
 const RENT_LABEL = {
-  sembrar:      { text: '🌱 Conviene sembrar',           cls: 'rent-sembrar'      },
-  comprar:      { text: '🛒 Conviene comprar',           cls: 'rent-comprar'      },
-  indiferente:  { text: '⚖️ Indiferente',               cls: 'rent-indiferente'  },
+  sembrar:     { text: '🌱 Conviene sembrar',  cls: 'rent-sembrar'      },
+  comprar:     { text: '🛒 Conviene comprar',  cls: 'rent-comprar'      },
+  indiferente: { text: '⚖️ Indiferente',       cls: 'rent-indiferente'  },
 }
 
 function fmt(n) {
@@ -757,25 +917,49 @@ function ClientePerfilesSection({ data }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [mode, setMode]               = useState('real')
-  const [fincaFilter, setFincaFilter] = useState(null) // null = ambas
+  const [dbPeriodo, setDbPeriodo]     = useState('mes')
+  const [customDesde, setCustomDesde] = useState('')
+  const [customHasta, setCustomHasta] = useState('')
+  const [fincaFilter, setFincaFilter] = useState(null)
   const [fincas, setFincas]           = useState([])
   const [loading, setLoading]         = useState(false)
-  const [kpi, setKpi]                 = useState({ cosechas: 0, ventas: 0, ingresos: 0 })
+
+  // KPIs
+  const [kpi, setKpi] = useState({ cosechas: 0, ventas: 0, ingresos: 0, gastos: 0, gananciaNeta: 0, personalPromedio: 0 })
+
+  // Ventas
   const [weeklyData, setWeeklyData]   = useState([])
   const [dayData, setDayData]         = useState([])
   const [prodData, setProdData]       = useState([])
   const [clientData, setClientData]   = useState([])
   const [starProduct, setStarProduct] = useState(null)
-  const [lossAlerts, setLossAlerts]   = useState([])
-  const [rentData, setRentData]       = useState([])
   const [perfiles, setPerfiles]       = useState([])
-  const [hasData, setHasData]         = useState(false)
-  const [mermasSummary, setMermasSummary]             = useState([])
-  const [devolucionesSummary, setDevolucionesSummary] = useState({ count: 0, perdida: 0, reingreso: 0 })
-  const [gastosKPI, setGastosKPI]                     = useState({ total: 0, count: 0 })
-  const [gastosByCategoria, setGastosByCategoria]     = useState([])
-  const [gastosVsIngresos, setGastosVsIngresos]       = useState([])
-  const [gastosMensual, setGastosMensual]             = useState([])
+
+  // Pérdidas
+  const [perdidas, setPerdidas]             = useState({ totalMermasKg: 0, totalDevPerdida: 0, pctPerdida: 0, showAlert: false, byProducto: [], devByCliente: [], hasMermas: false, hasDev: false })
+  const [lossAlerts, setLossAlerts]         = useState([])
+  const [mermasSummary, setMermasSummary]   = useState([])
+
+  // Gastos
+  const [gastosKPI, setGastosKPI]               = useState({ total: 0, count: 0 })
+  const [gastosByCategoria, setGastosByCategoria] = useState([])
+  const [gastosVsIngresos, setGastosVsIngresos]   = useState([])
+  const [gastosMensual, setGastosMensual]         = useState([])
+
+  // Compras
+  const [comprasSummary, setComprasSummary] = useState({ total: 0, count: 0, topProveedor: null, topProducto: null, byFinca: [] })
+
+  // Personal
+  const [personalSummary, setPersonalSummary] = useState({ totalPersonaDia: 0, promedioDia: 0, byLabor: [], byFinca: [], topDia: null })
+
+  // Rentabilidad
+  const [rentData, setRentData] = useState([])
+
+  // Alertas
+  const [alertas, setAlertas] = useState([])
+
+  // Other
+  const [hasData, setHasData] = useState(false)
 
   useEffect(() => {
     supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
@@ -783,23 +967,14 @@ export default function Dashboard() {
     })
   }, [])
 
-  const fetchReal = useCallback(async (fincaId = null) => {
+  const fetchReal = useCallback(async (fincaId, from, to, fromW, from4M) => {
     setLoading(true)
-    const now      = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const from     = isoDate(firstDay)
-    const to       = isoDate(now)
-    const thirtyD  = new Date(now)
-    thirtyD.setDate(thirtyD.getDate() - 29) // 30-day window inclusive
-    const fromW    = isoDate(thirtyD)
-    const from4M   = isoDate(new Date(now.getFullYear(), now.getMonth() - 3, 1))
-
-    const applyFinca = (q) => fincaId != null ? q.eq('finca_id', fincaId) : q
+    const applyFinca = q => fincaId != null ? q.eq('finca_id', fincaId) : q
 
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
       { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m }, { data: dev },
-      { data: g }, { data: gHist },
+      { data: g }, { data: gHist }, { data: comp }, { data: pers },
     ] = await Promise.all([
       applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
@@ -809,61 +984,103 @@ export default function Dashboard() {
       supabase.from('proveedor_productos').select('nombre,precio,proveedor_id'),
       supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
       applyFinca(supabase.from('mermas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
-      applyFinca(supabase.from('devoluciones').select('total,puede_revenderse').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('devoluciones').select('total,puede_revenderse,cliente').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('gastos').select('monto,categoria,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('gastos').select('monto,fecha').eq('estado','activo').gte('fecha',from4M).lte('fecha',to)),
+      applyFinca(supabase.from('compras').select('total,producto,proveedor_id,finca_id,fincas(nombre),proveedores(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('personal_diario').select('cantidad_personas,tipo_labor,fecha,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
     ])
 
-    const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || [], merArr = m || [], devArr = dev || []
-    const gasArr = g || [], gasHistArr = gHist || []
+    const cosArr   = c    || []
+    const venArr   = v    || []
+    const cosW2    = cW   || []
+    const venW2    = vW   || []
+    const merArr   = m    || []
+    const devArr   = dev  || []
+    const gasArr   = g    || []
+    const gasHistArr = gHist || []
+    const compArr  = comp || []
+    const persArr  = pers || []
+
     const totalIngresos = venArr.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+    const totalGastos   = gasArr.reduce((s, r) => s + parseFloat(r.monto || 0), 0)
+    const persTotal     = persArr.reduce((s, r) => s + (r.cantidad_personas || 0), 0)
+    const persDias      = new Set(persArr.map(r => r.fecha)).size
+    const persPromedio  = persDias > 0 ? Math.round((persTotal / persDias) * 10) / 10 : 0
 
     // Build proveedor id→nombre map
     const provMap = {}
     ;(provsActive || []).forEach(p => { provMap[p.id] = p.nombre })
 
-    setKpi({ cosechas: cosArr.length, ventas: venArr.length, ingresos: totalIngresos })
+    setKpi({
+      cosechas: cosArr.length,
+      ventas: venArr.length,
+      ingresos: totalIngresos,
+      gastos: totalGastos,
+      gananciaNeta: totalIngresos - totalGastos,
+      personalPromedio: persPromedio,
+    })
     setWeeklyData(buildWeeklyData(venW2))
     setDayData(buildDayOfWeekData(venW2))
     setProdData(buildProductoData(cosW2, venW2))
     setClientData(buildClienteData(venW2))
     setStarProduct(buildStarProduct(venArr))
     setMermasSummary(buildMermasSummary(merArr))
-    setDevolucionesSummary(buildDevolucionesSummary(devArr))
+    setPerdidas(buildPerdidasCombinadas(cosArr, merArr, devArr))
+    setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
     setGastosKPI(buildGastosKPI(gasArr))
     setGastosByCategoria(buildGastosByCategoria(gasArr))
     setGastosVsIngresos(buildIngresosVsGastos(venArr, gasArr))
     setGastosMensual(buildGastosMensuales(gasHistArr))
-    setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
+    setComprasSummary(buildComprasSummary(compArr))
+    setPersonalSummary(buildPersonalSummary(persArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setPerfiles(buildClientePerfiles(venW2))
+    setAlertas(buildAlertas(cosArr, venW2, merArr, devArr))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
   }, [])
 
   useEffect(() => {
     if (mode === 'real') {
-      fetchReal(fincaFilter)
+      if (dbPeriodo === 'custom' && (!customDesde || !customHasta)) return
+      const { from, to } = getDBRange(dbPeriodo, customDesde, customHasta)
+      const now = new Date()
+      const thirtyD = new Date(now); thirtyD.setDate(thirtyD.getDate() - 29)
+      const fromW   = isoDate(thirtyD)
+      const from4M  = isoDate(new Date(now.getFullYear(), now.getMonth() - 3, 1))
+      fetchReal(fincaFilter, from, to, fromW, from4M)
     } else {
-      setKpi(DEMO_KPI)
+      // Demo mode
+      setKpi({
+        cosechas: DEMO_KPI_EXTENDED.cosechas,
+        ventas: DEMO_KPI_EXTENDED.ventas,
+        ingresos: DEMO_KPI_EXTENDED.ingresos,
+        gastos: DEMO_KPI_EXTENDED.gastos,
+        gananciaNeta: DEMO_KPI_EXTENDED.gananciaNeta,
+        personalPromedio: DEMO_KPI_EXTENDED.personalPromedio,
+      })
       setWeeklyData(DEMO_WEEKLY)
       setDayData(DEMO_DAYS)
       setProdData(DEMO_PRODUCTOS)
       setClientData(DEMO_CLIENTES)
       setStarProduct(DEMO_STAR)
       setMermasSummary(DEMO_MERMAS_SUMMARY)
-      setDevolucionesSummary(DEMO_DEVOLUCIONES)
+      setPerdidas(DEMO_PERDIDAS)
+      setLossAlerts(DEMO_LOSSES)
       setGastosKPI(DEMO_GASTOS_KPI)
       setGastosByCategoria(DEMO_GASTOS_CATEGORIA)
       setGastosVsIngresos(DEMO_GASTOS_VS_INGRESOS)
       setGastosMensual(DEMO_GASTOS_MENSUAL)
-      setLossAlerts(DEMO_LOSSES)
+      setComprasSummary(DEMO_COMPRAS)
+      setPersonalSummary(DEMO_PERSONAL)
       setRentData(DEMO_RENT)
       setPerfiles(DEMO_PERFILES)
+      setAlertas(DEMO_ALERTAS)
       setHasData(true)
       setLoading(false)
     }
-  }, [mode, fincaFilter, fetchReal])
+  }, [mode, fincaFilter, dbPeriodo, customDesde, customHasta, fetchReal])
 
   const totalClientes = clientData.reduce((s, r) => s + r.total, 0)
   const maxDay = dayData.length ? Math.max(...dayData.map(d => d.ventas)) : 1
@@ -874,7 +1091,7 @@ export default function Dashboard() {
       {/* ── Header ── */}
       <div className="db-header">
         <div className="db-header-left">
-          <p className="db-header-eyebrow">Resumen del mes</p>
+          <p className="db-header-eyebrow">Panel de control</p>
           <h2 className="db-header-title">Dashboard</h2>
         </div>
         <div className="db-mode-wrap">
@@ -889,6 +1106,39 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── Period filter bar ── */}
+      {mode === 'real' && (
+        <>
+          <div className="db-period-bar">
+            {PERIODOS_DB.map(p => (
+              <button
+                key={p.id}
+                className={`db-period-btn ${dbPeriodo === p.id ? 'active' : ''}`}
+                onClick={() => setDbPeriodo(p.id)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {dbPeriodo === 'custom' && (
+            <div className="db-custom-range">
+              <label>Desde:</label>
+              <input
+                type="date"
+                value={customDesde}
+                onChange={e => setCustomDesde(e.target.value)}
+              />
+              <label>Hasta:</label>
+              <input
+                type="date"
+                value={customHasta}
+                onChange={e => setCustomHasta(e.target.value)}
+              />
+            </div>
+          )}
+        </>
+      )}
 
       {/* ── Filtro finca ── */}
       <div className="db-finca-bar">
@@ -922,101 +1172,20 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          {/* ── KPIs ── */}
+          {/* ── Section 1: KPIs ── */}
           <div className="db-kpi-grid">
-            <KpiCard icon="🌿" label="Cosechas del mes" value={kpi.cosechas} accent={GOLD} />
-            <KpiCard icon="💰" label="Ventas del mes"   value={kpi.ventas}   accent={BLUE_BAR} />
-            <KpiCard icon="📈" label="Ingresos totales" value={kpi.ingresos} accent={GREEN_VAL} isCurrency />
+            <KpiCard icon="🌿" label="Cosechas del período"  value={kpi.cosechas}       accent={GOLD} />
+            <KpiCard icon="💰" label="Ventas del período"    value={kpi.ventas}          accent={BLUE_BAR} />
+            <KpiCard icon="📈" label="Ingresos totales"      value={kpi.ingresos}        accent={GREEN_VAL} isCurrency />
+            <KpiCard icon="💸" label="Gastos operativos"     value={kpi.gastos}          accent="#f87171" isCurrency />
+            <KpiCard icon="🏦" label="Ganancia neta"         value={kpi.gananciaNeta}    accent={kpi.gananciaNeta >= 0 ? GREEN_VAL : '#f87171'} isCurrency />
+            <KpiCard icon="👷" label="Personal prom./día"    value={kpi.personalPromedio} accent="#c084fc" />
           </div>
 
-          {/* ── Mermas registradas (ámbar) ── */}
-          {mermasSummary.length > 0 && (
-            <div className="db-mermas-banner">
-              <div className="db-mermas-banner-head">
-                <span className="db-mermas-pulse" />
-                <span className="db-mermas-banner-title">⚠️ Mermas registradas este mes</span>
-              </div>
-              <div className="db-mermas-rows">
-                {mermasSummary.map((a, i) => (
-                  <div key={i} className="db-mermas-row">
-                    <span className="db-mermas-prod">{a.producto}</span>
-                    <span className="db-mermas-kg">{a.cantidad.toLocaleString('es-CR')} kg registrados como pérdida</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* ── Section 2: Ventas ── */}
+          <SectionHeader icon="📊" title="Ventas" sub="Análisis de ingresos" />
 
-          {/* ── Devoluciones del mes ── */}
-          {devolucionesSummary.count > 0 && (
-            <div className="db-dev-banner">
-              <div className="db-mermas-banner-head">
-                <span className="db-dev-pulse" />
-                <span className="db-mermas-banner-title">↩️ Devoluciones registradas este mes</span>
-              </div>
-              <div className="db-dev-metrics">
-                <div className="db-dev-metric">
-                  <span className="db-dev-metric-label">Total devoluciones</span>
-                  <span className="db-dev-metric-value">{devolucionesSummary.count}</span>
-                </div>
-                {devolucionesSummary.perdida > 0 && (
-                  <div className="db-dev-metric db-dev-metric-danger">
-                    <span className="db-dev-metric-label">❌ Pérdida neta</span>
-                    <span className="db-dev-metric-value">₡{Math.round(devolucionesSummary.perdida).toLocaleString('es-CR')}</span>
-                  </div>
-                )}
-                {devolucionesSummary.reingreso > 0 && (
-                  <div className="db-dev-metric db-dev-metric-ok">
-                    <span className="db-dev-metric-label">✅ Reingresado al inventario</span>
-                    <span className="db-dev-metric-value">₡{Math.round(devolucionesSummary.reingreso).toLocaleString('es-CR')}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ── Alertas de pérdida sin destino (rojo) ── */}
-          {lossAlerts.length > 0 && (
-            <div className="db-loss-banner">
-              <div className="db-loss-banner-head">
-                <span className="db-loss-pulse" />
-                <span className="db-loss-banner-title">🚨 Inventario sin destino registrado</span>
-              </div>
-              {lossAlerts.map((a, i) => {
-                const soldPct  = a.cosechado > 0 ? Math.round((a.vendido  / a.cosechado) * 100) : 0
-                const mermaPct = a.cosechado > 0 ? Math.round((a.mermaKg / a.cosechado) * 100) : 0
-                return (
-                  <div key={i} className="db-loss-row">
-                    <div className="db-loss-main">
-                      <span className="db-loss-phrase">
-                        Atención: <strong>{a.sinDestino} kg de {a.producto}</strong> sin destino registrado
-                      </span>
-                      <span className="db-loss-detail">
-                        {a.pct}% sin destino — {a.vendido} kg vendidos
-                        {a.mermaKg > 0 ? ` · ${a.mermaKg} kg en mermas` : ''} · {a.cosechado} kg cosechados este mes
-                      </span>
-                    </div>
-                    <div className="db-loss-gauge-wrap">
-                      <div className="db-loss-gauge-track">
-                        <div className="db-loss-gauge-sold"  style={{ width: `${soldPct}%` }} />
-                        {a.mermaKg > 0 && (
-                          <div className="db-loss-gauge-merma" style={{ width: `${mermaPct}%`, left: `${soldPct}%` }} />
-                        )}
-                        <div className="db-loss-gauge-lost"  style={{ width: `${a.pct}%`, left: `${soldPct + mermaPct}%` }} />
-                      </div>
-                      <div className="db-loss-gauge-labels">
-                        <span style={{ color: BLUE_BAR }}>✓ {a.vendido} kg vendidos</span>
-                        {a.mermaKg > 0 && <span style={{ color: '#fb923c' }}>⚠ {a.mermaKg} kg merma</span>}
-                        <span style={{ color: '#f87171' }}>✗ {a.sinDestino} kg sin destino</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* ── Area chart (full width) ── */}
+          {/* Area chart weekly */}
           <div className="db-chart-card db-chart-full">
             <div className="db-chart-header">
               <h3 className="db-chart-title">Ingresos semanales</h3>
@@ -1042,7 +1211,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
 
-          {/* ── Ventas por día | Producto estrella ── */}
+          {/* Ventas por día | Producto estrella */}
           <div className="db-charts-row">
             <div className="db-chart-card">
               <div className="db-chart-header">
@@ -1079,7 +1248,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* ── Cosechado vs Vendido | Donut clientes ── */}
+          {/* Cosechado vs Vendido | Donut clientes */}
           <div className="db-charts-row">
             <div className="db-chart-card">
               <div className="db-chart-header">
@@ -1151,12 +1320,433 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ── Perfil de clientes ── */}
-          <div className="db-chart-card db-chart-full">
-            <ClientePerfilesSection data={perfiles} />
-          </div>
+          {/* ── Section 3: Pérdidas ── */}
+          {(perdidas.hasMermas || perdidas.hasDev || lossAlerts.length > 0) && (
+            <>
+              <SectionHeader icon="⚠️" title="Pérdidas" sub="Mermas y devoluciones" />
 
-          {/* ── Rentabilidad ── */}
+              {/* Alert banner if >10% */}
+              {perdidas.showAlert && (
+                <div className="db-loss-banner">
+                  <div className="db-loss-banner-head">
+                    <span className="db-loss-pulse" />
+                    <span className="db-loss-banner-title">
+                      🚨 Mermas al {perdidas.pctPerdida}% de la producción — supera el límite del 10%
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* KPI metrics row */}
+              <div className="db-gastos-kpi-row">
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Total mermas (kg)</span>
+                  <span className="db-gastos-kpi-value db-gastos-kpi-danger">
+                    {perdidas.totalMermasKg.toLocaleString('es-CR')} kg
+                  </span>
+                </div>
+                {perdidas.hasDev && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Pérdida en devoluciones</span>
+                    <span className="db-gastos-kpi-value db-gastos-kpi-danger">
+                      ₡{perdidas.totalDevPerdida.toLocaleString('es-CR')}
+                    </span>
+                  </div>
+                )}
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">% Pérdida producción</span>
+                  <span className={`db-gastos-kpi-value ${perdidas.pctPerdida > 10 ? 'db-gastos-kpi-danger' : 'db-gastos-kpi-ok'}`}>
+                    {perdidas.pctPerdida}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Charts row */}
+              {(perdidas.byProducto.length > 0 || perdidas.devByCliente.length > 0) && (
+                <div className="db-charts-row">
+                  {perdidas.byProducto.length > 0 && (
+                    <div className="db-chart-card">
+                      <div className="db-chart-header">
+                        <h3 className="db-chart-title">Mermas por producto</h3>
+                        <span className="db-chart-sub">kg perdidos</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart
+                          data={perdidas.byProducto}
+                          layout="vertical"
+                          margin={{ top: 8, right: 24, left: 90, bottom: 0 }}
+                          barSize={18}
+                        >
+                          <CartesianGrid stroke={GRID_C} horizontal={false} />
+                          <XAxis type="number" tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v} kg`} />
+                          <YAxis type="category" dataKey="producto" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} width={85} />
+                          <Tooltip
+                            formatter={val => [`${val} kg`, 'Merma']}
+                            contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                            itemStyle={{ color: '#e8edf8' }}
+                          />
+                          <Bar dataKey="cantidad" name="Merma" fill="#fb923c" radius={[0, 6, 6, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+
+                  {perdidas.devByCliente.length > 0 && (
+                    <div className="db-chart-card">
+                      <div className="db-chart-header">
+                        <h3 className="db-chart-title">Devoluciones (pérdida)</h3>
+                        <span className="db-chart-sub">Por cliente · no reingresado</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart
+                          data={perdidas.devByCliente}
+                          layout="vertical"
+                          margin={{ top: 8, right: 24, left: 100, bottom: 0 }}
+                          barSize={18}
+                        >
+                          <CartesianGrid stroke={GRID_C} horizontal={false} />
+                          <XAxis type="number" tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} />
+                          <YAxis type="category" dataKey="cliente" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} width={95} />
+                          <Tooltip
+                            formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Pérdida']}
+                            contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                            itemStyle={{ color: '#e8edf8' }}
+                          />
+                          <Bar dataKey="total" name="Pérdida" fill="#f87171" radius={[0, 6, 6, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Loss alerts (sin destino) */}
+              {lossAlerts.length > 0 && (
+                <div className="db-loss-banner">
+                  <div className="db-loss-banner-head">
+                    <span className="db-loss-pulse" />
+                    <span className="db-loss-banner-title">🚨 Inventario sin destino registrado</span>
+                  </div>
+                  {lossAlerts.map((a, i) => {
+                    const soldPct  = a.cosechado > 0 ? Math.round((a.vendido  / a.cosechado) * 100) : 0
+                    const mermaPct = a.cosechado > 0 ? Math.round((a.mermaKg / a.cosechado) * 100) : 0
+                    return (
+                      <div key={i} className="db-loss-row">
+                        <div className="db-loss-main">
+                          <span className="db-loss-phrase">
+                            Atención: <strong>{a.sinDestino} kg de {a.producto}</strong> sin destino registrado
+                          </span>
+                          <span className="db-loss-detail">
+                            {a.pct}% sin destino — {a.vendido} kg vendidos
+                            {a.mermaKg > 0 ? ` · ${a.mermaKg} kg en mermas` : ''} · {a.cosechado} kg cosechados este mes
+                          </span>
+                        </div>
+                        <div className="db-loss-gauge-wrap">
+                          <div className="db-loss-gauge-track">
+                            <div className="db-loss-gauge-sold"  style={{ width: `${soldPct}%` }} />
+                            {a.mermaKg > 0 && (
+                              <div className="db-loss-gauge-merma" style={{ width: `${mermaPct}%`, left: `${soldPct}%` }} />
+                            )}
+                            <div className="db-loss-gauge-lost"  style={{ width: `${a.pct}%`, left: `${soldPct + mermaPct}%` }} />
+                          </div>
+                          <div className="db-loss-gauge-labels">
+                            <span style={{ color: BLUE_BAR }}>✓ {a.vendido} kg vendidos</span>
+                            {a.mermaKg > 0 && <span style={{ color: '#fb923c' }}>⚠ {a.mermaKg} kg merma</span>}
+                            <span style={{ color: '#f87171' }}>✗ {a.sinDestino} kg sin destino</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Section 4: Gastos ── */}
+          {gastosKPI.count > 0 && (
+            <>
+              <SectionHeader icon="💸" title="Gastos operativos" sub="Control financiero" />
+
+              <div className="db-gastos-kpi-row">
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Total gastos del período</span>
+                  <span className="db-gastos-kpi-value db-gastos-kpi-danger">
+                    ₡{gastosKPI.total.toLocaleString('es-CR')}
+                  </span>
+                </div>
+                {gastosByCategoria[0] && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Categoría principal</span>
+                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
+                      {CATEGORIA_LABELS[gastosByCategoria[0].categoria] || gastosByCategoria[0].categoria}
+                    </span>
+                    <span className="db-gastos-kpi-sub">
+                      ₡{gastosByCategoria[0].monto.toLocaleString('es-CR')} · {gastosKPI.total > 0 ? Math.round((gastosByCategoria[0].monto / gastosKPI.total) * 100) : 0}% del total
+                    </span>
+                  </div>
+                )}
+                {gastosVsIngresos.length > 0 && (() => {
+                  const totalIng = gastosVsIngresos.reduce((s, r) => s + r.ingresos, 0)
+                  const balance  = totalIng - gastosKPI.total
+                  return (
+                    <div className="db-gastos-kpi-card">
+                      <span className="db-gastos-kpi-label">Balance neto del período</span>
+                      <span className={`db-gastos-kpi-value ${balance >= 0 ? 'db-gastos-kpi-ok' : 'db-gastos-kpi-danger'}`}>
+                        {balance >= 0 ? '+' : ''}₡{Math.abs(balance).toLocaleString('es-CR')}
+                      </span>
+                      <span className="db-gastos-kpi-sub">Ingresos − Gastos</span>
+                    </div>
+                  )
+                })()}
+              </div>
+
+              <div className="db-charts-row">
+                <div className="db-chart-card">
+                  <div className="db-chart-header">
+                    <h3 className="db-chart-title">Gastos por categoría</h3>
+                    <span className="db-chart-sub">Período actual</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart
+                      data={gastosByCategoria}
+                      layout="vertical"
+                      margin={{ top: 8, right: 24, left: 120, bottom: 0 }}
+                      barSize={18}
+                    >
+                      <CartesianGrid stroke={GRID_C} horizontal={false} />
+                      <XAxis type="number" tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} />
+                      <YAxis type="category" dataKey="categoria" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} width={115} tickFormatter={v => CATEGORIA_LABELS[v] || v} />
+                      <Tooltip
+                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gasto']}
+                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                        itemStyle={{ color: '#e8edf8' }}
+                      />
+                      <Bar dataKey="monto" name="Gasto" radius={[0, 6, 6, 0]}>
+                        {gastosByCategoria.map((d, i) => (
+                          <Cell key={i} fill={GASTO_COLORS[d.categoria] || '#94a3b8'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {gastosVsIngresos.length > 0 && (
+                  <div className="db-chart-card">
+                    <div className="db-chart-header">
+                      <h3 className="db-chart-title">Ingresos vs Gastos</h3>
+                      <span className="db-chart-sub">Por finca · período actual</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={gastosVsIngresos} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barGap={4} barSize={28}>
+                        <CartesianGrid stroke={GRID_C} vertical={false} />
+                        <XAxis dataKey="finca" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} width={58} />
+                        <Tooltip
+                          formatter={(val, name) => [`₡${Math.round(val).toLocaleString('es-CR')}`, name]}
+                          contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                          itemStyle={{ color: '#e8edf8' }}
+                        />
+                        <Legend wrapperStyle={{ paddingTop: 14, fontSize: 13 }} formatter={n => <span style={{ color: TEXT_S }}>{n}</span>} />
+                        <Bar dataKey="ingresos" name="Ingresos" fill={GREEN_VAL} radius={[5, 5, 0, 0]} />
+                        <Bar dataKey="gastos"   name="Gastos"   fill="#f87171"  radius={[5, 5, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+
+              {gastosMensual.length > 1 && (
+                <div className="db-chart-card db-chart-full">
+                  <div className="db-chart-header">
+                    <h3 className="db-chart-title">Tendencia de gastos</h3>
+                    <span className="db-chart-sub">Últimos 4 meses</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={gastosMensual} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={40}>
+                      <CartesianGrid stroke={GRID_C} vertical={false} />
+                      <XAxis dataKey="mes" tick={{ fill: TEXT_S, fontSize: 13 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} width={58} />
+                      <Tooltip
+                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gastos']}
+                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                        itemStyle={{ color: '#e8edf8' }}
+                      />
+                      <Bar dataKey="monto" name="Gastos" fill="#f87171" radius={[6, 6, 0, 0]}>
+                        {gastosMensual.map((d, i) => (
+                          <Cell key={i} fill={i === gastosMensual.length - 1 ? '#fb923c' : 'rgba(248,113,113,0.5)'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Section 5: Compras ── */}
+          {comprasSummary.count > 0 && (
+            <>
+              <SectionHeader icon="🛒" title="Compras a proveedores" sub="Insumos y materiales" />
+
+              <div className="db-gastos-kpi-row">
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Total compras</span>
+                  <span className="db-gastos-kpi-value" style={{ color: '#60a5fa' }}>
+                    ₡{comprasSummary.total.toLocaleString('es-CR')}
+                  </span>
+                  <span className="db-gastos-kpi-sub">{comprasSummary.count} registros</span>
+                </div>
+                {comprasSummary.topProveedor && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Top proveedor</span>
+                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
+                      {comprasSummary.topProveedor.nombre}
+                    </span>
+                    <span className="db-gastos-kpi-sub">
+                      ₡{comprasSummary.topProveedor.total.toLocaleString('es-CR')}
+                    </span>
+                  </div>
+                )}
+                {comprasSummary.topProducto && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Top producto comprado</span>
+                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
+                      {comprasSummary.topProducto.nombre}
+                    </span>
+                    <span className="db-gastos-kpi-sub">
+                      ₡{comprasSummary.topProducto.total.toLocaleString('es-CR')}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {comprasSummary.byFinca.length > 1 && (
+                <div className="db-chart-card db-chart-full">
+                  <div className="db-chart-header">
+                    <h3 className="db-chart-title">Compras por finca</h3>
+                    <span className="db-chart-sub">Distribución del gasto en insumos</span>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={comprasSummary.byFinca} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={40}>
+                      <CartesianGrid stroke={GRID_C} vertical={false} />
+                      <XAxis dataKey="finca" tick={{ fill: TEXT_S, fontSize: 13 }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₡${(v/1000).toFixed(0)}k`} width={58} />
+                      <Tooltip
+                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Compras']}
+                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                        itemStyle={{ color: '#e8edf8' }}
+                      />
+                      <Bar dataKey="total" name="Compras" fill="#60a5fa" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Section 6: Personal ── */}
+          {personalSummary.totalPersonaDia > 0 && (
+            <>
+              <SectionHeader icon="👷" title="Personal" sub="Gestión de mano de obra" />
+
+              <div className="db-gastos-kpi-row">
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Total persona-día</span>
+                  <span className="db-gastos-kpi-value" style={{ color: '#c084fc' }}>
+                    {personalSummary.totalPersonaDia.toLocaleString('es-CR')}
+                  </span>
+                </div>
+                <div className="db-gastos-kpi-card">
+                  <span className="db-gastos-kpi-label">Promedio personas/día</span>
+                  <span className="db-gastos-kpi-value" style={{ color: '#c084fc' }}>
+                    {personalSummary.promedioDia}
+                  </span>
+                </div>
+                {personalSummary.topDia && (
+                  <div className="db-gastos-kpi-card">
+                    <span className="db-gastos-kpi-label">Día más activo</span>
+                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
+                      {fmtFechaCorta(personalSummary.topDia[0])}
+                    </span>
+                    <span className="db-gastos-kpi-sub">
+                      {personalSummary.topDia[1]} personas
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {(personalSummary.byLabor.length > 0 || personalSummary.byFinca.length > 0) && (
+                <div className="db-charts-row">
+                  {personalSummary.byLabor.length > 0 && (
+                    <div className="db-chart-card">
+                      <div className="db-chart-header">
+                        <h3 className="db-chart-title">Personal por tipo labor</h3>
+                        <span className="db-chart-sub">Persona-día acumulado</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <PieChart>
+                          <Pie
+                            data={personalSummary.byLabor}
+                            dataKey="total"
+                            nameKey="tipo"
+                            innerRadius="40%" outerRadius="70%"
+                            paddingAngle={3}
+                            startAngle={90} endAngle={-270}
+                          >
+                            {personalSummary.byLabor.map((d, i) => (
+                              <Cell key={i} fill={LABOR_COLORS[d.tipo] || PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={(val, name) => [`${val} persona-día`, LABOR_LABELS[name] || name]}
+                            contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                            itemStyle={{ color: '#e8edf8' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="db-pie-legend">
+                        {personalSummary.byLabor.map((d, i) => (
+                          <div key={i} className="db-pie-row">
+                            <span className="db-pie-dot" style={{ background: LABOR_COLORS[d.tipo] || PIE_COLORS[i % PIE_COLORS.length] }} />
+                            <span className="db-pie-name">{LABOR_LABELS[d.tipo] || d.tipo}</span>
+                            <span className="db-pie-pct">{d.total}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {personalSummary.byFinca.length > 0 && (
+                    <div className="db-chart-card">
+                      <div className="db-chart-header">
+                        <h3 className="db-chart-title">Personal por finca</h3>
+                        <span className="db-chart-sub">Promedio diario</span>
+                      </div>
+                      <ResponsiveContainer width="100%" height={260}>
+                        <BarChart data={personalSummary.byFinca} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={36}>
+                          <CartesianGrid stroke={GRID_C} vertical={false} />
+                          <XAxis dataKey="finca" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+                          <Tooltip
+                            formatter={(val, name) => [val, name === 'promedio' ? 'Promedio/día' : 'Total persona-día']}
+                            contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
+                            itemStyle={{ color: '#e8edf8' }}
+                          />
+                          <Legend wrapperStyle={{ paddingTop: 14, fontSize: 13 }} formatter={n => <span style={{ color: TEXT_S }}>{n === 'promedio' ? 'Promedio/día' : 'Total'}</span>} />
+                          <Bar dataKey="total"    name="total"    fill="rgba(192,132,252,0.4)" radius={[5, 5, 0, 0]} />
+                          <Bar dataKey="promedio" name="promedio" fill="#c084fc"               radius={[5, 5, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Section 7: Rentabilidad ── */}
+          <SectionHeader icon="⚖️" title="Rentabilidad" sub="Producción propia vs proveedores" />
           <div className="db-chart-card db-chart-full">
             {rentData.length > 0 ? (
               <RentabilidadSection data={rentData} />
@@ -1185,156 +1775,26 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* ── Gastos ── */}
-          {gastosKPI.count > 0 && (
+          {/* ── Section 8: Alertas ── */}
+          {alertas.length > 0 && (
             <>
-              {/* KPIs gastos */}
-              <div className="db-gastos-header">
-                <p className="db-header-eyebrow">Control financiero</p>
-                <h3 className="db-gastos-title">Gastos operativos</h3>
+              <SectionHeader icon="🔔" title="Alertas" sub="Situaciones que requieren atención" />
+              <div className="db-alertas-list">
+                {alertas.map((a, i) => (
+                  <div key={i} className={`db-alerta-item db-alerta-${a.tipo}`}>
+                    <span className="db-alerta-icon">{a.icon}</span>
+                    <span className="db-alerta-msg">{a.msg}</span>
+                  </div>
+                ))}
               </div>
-
-              <div className="db-gastos-kpi-row">
-                <div className="db-gastos-kpi-card">
-                  <span className="db-gastos-kpi-label">Total gastos del mes</span>
-                  <span className="db-gastos-kpi-value db-gastos-kpi-danger">
-                    ₡{gastosKPI.total.toLocaleString('es-CR')}
-                  </span>
-                </div>
-                {gastosByCategoria[0] && (
-                  <div className="db-gastos-kpi-card">
-                    <span className="db-gastos-kpi-label">Categoría principal</span>
-                    <span className="db-gastos-kpi-value" style={{ fontSize: 18 }}>
-                      {CATEGORIA_LABELS[gastosByCategoria[0].categoria] || gastosByCategoria[0].categoria}
-                    </span>
-                    <span className="db-gastos-kpi-sub">
-                      ₡{gastosByCategoria[0].monto.toLocaleString('es-CR')} · {gastosKPI.total > 0 ? Math.round((gastosByCategoria[0].monto / gastosKPI.total) * 100) : 0}% del total
-                    </span>
-                  </div>
-                )}
-                {gastosVsIngresos.length > 0 && (() => {
-                  const totalIng = gastosVsIngresos.reduce((s, r) => s + r.ingresos, 0)
-                  const balance  = totalIng - gastosKPI.total
-                  return (
-                    <div className="db-gastos-kpi-card">
-                      <span className="db-gastos-kpi-label">Balance neto del mes</span>
-                      <span className={`db-gastos-kpi-value ${balance >= 0 ? 'db-gastos-kpi-ok' : 'db-gastos-kpi-danger'}`}>
-                        {balance >= 0 ? '+' : ''}₡{Math.abs(balance).toLocaleString('es-CR')}
-                      </span>
-                      <span className="db-gastos-kpi-sub">Ingresos − Gastos</span>
-                    </div>
-                  )
-                })()}
-              </div>
-
-              {/* Charts row: categorías + ingresos vs gastos */}
-              <div className="db-charts-row">
-                {/* Gastos por categoría */}
-                <div className="db-chart-card">
-                  <div className="db-chart-header">
-                    <h3 className="db-chart-title">Gastos por categoría</h3>
-                    <span className="db-chart-sub">Mes actual</span>
-                  </div>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart
-                      data={gastosByCategoria}
-                      layout="vertical"
-                      margin={{ top: 8, right: 24, left: 120, bottom: 0 }}
-                      barSize={18}
-                    >
-                      <CartesianGrid stroke={GRID_C} horizontal={false} />
-                      <XAxis
-                        type="number"
-                        tick={{ fill: TEXT_S, fontSize: 11 }}
-                        axisLine={false} tickLine={false}
-                        tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`}
-                      />
-                      <YAxis
-                        type="category"
-                        dataKey="categoria"
-                        tick={{ fill: TEXT_S, fontSize: 12 }}
-                        axisLine={false} tickLine={false}
-                        width={115}
-                        tickFormatter={v => CATEGORIA_LABELS[v] || v}
-                      />
-                      <Tooltip
-                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gasto']}
-                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
-                        itemStyle={{ color: '#e8edf8' }}
-                      />
-                      <Bar dataKey="monto" name="Gasto" radius={[0, 6, 6, 0]}>
-                        {gastosByCategoria.map((d, i) => (
-                          <Cell key={i} fill={GASTO_COLORS[d.categoria] || '#94a3b8'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Ingresos vs Gastos por finca */}
-                {gastosVsIngresos.length > 0 && (
-                  <div className="db-chart-card">
-                    <div className="db-chart-header">
-                      <h3 className="db-chart-title">Ingresos vs Gastos</h3>
-                      <span className="db-chart-sub">Por finca · mes actual</span>
-                    </div>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <BarChart
-                        data={gastosVsIngresos}
-                        margin={{ top: 12, right: 8, left: 0, bottom: 0 }}
-                        barGap={4} barSize={28}
-                      >
-                        <CartesianGrid stroke={GRID_C} vertical={false} />
-                        <XAxis dataKey="finca" tick={{ fill: TEXT_S, fontSize: 12 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false}
-                          tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`} width={58}
-                        />
-                        <Tooltip
-                          formatter={(val, name) => [`₡${Math.round(val).toLocaleString('es-CR')}`, name]}
-                          contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
-                          itemStyle={{ color: '#e8edf8' }}
-                        />
-                        <Legend wrapperStyle={{ paddingTop: 14, fontSize: 13 }}
-                          formatter={n => <span style={{ color: TEXT_S }}>{n}</span>}
-                        />
-                        <Bar dataKey="ingresos" name="Ingresos" fill={GREEN_VAL} radius={[5, 5, 0, 0]} />
-                        <Bar dataKey="gastos"   name="Gastos"   fill="#f87171"  radius={[5, 5, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </div>
-
-              {/* Tendencia mensual de gastos */}
-              {gastosMensual.length > 1 && (
-                <div className="db-chart-card db-chart-full">
-                  <div className="db-chart-header">
-                    <h3 className="db-chart-title">Tendencia de gastos</h3>
-                    <span className="db-chart-sub">Últimos 4 meses</span>
-                  </div>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={gastosMensual} margin={{ top: 12, right: 8, left: 0, bottom: 0 }} barSize={40}>
-                      <CartesianGrid stroke={GRID_C} vertical={false} />
-                      <XAxis dataKey="mes" tick={{ fill: TEXT_S, fontSize: 13 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fill: TEXT_S, fontSize: 11 }} axisLine={false} tickLine={false}
-                        tickFormatter={v => `₡${(v / 1000).toFixed(0)}k`} width={58}
-                      />
-                      <Tooltip
-                        formatter={val => [`₡${Math.round(val).toLocaleString('es-CR')}`, 'Gastos']}
-                        contentStyle={{ background: TOOLTIP_BG, border: `1px solid ${GOLD_DIM}`, borderRadius: 10, fontSize: 13 }}
-                        itemStyle={{ color: '#e8edf8' }}
-                      />
-                      <Bar dataKey="monto" name="Gastos" fill="#f87171" radius={[6, 6, 0, 0]}>
-                        {gastosMensual.map((d, i) => (
-                          <Cell key={i} fill={i === gastosMensual.length - 1 ? '#fb923c' : 'rgba(248,113,113,0.5)'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
             </>
           )}
+
+          {/* ── Section 9: Perfil de Clientes ── */}
+          <SectionHeader icon="👥" title="Perfil de Clientes" sub="Hábitos de compra" />
+          <div className="db-chart-card db-chart-full">
+            <ClientePerfilesSection data={perfiles} />
+          </div>
 
         </>
       )}

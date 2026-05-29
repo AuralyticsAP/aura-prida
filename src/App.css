@@ -3230,3 +3230,39 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Dashboard — Period filter ── */
+.db-period-bar {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px;
+}
+.db-period-btn {
+  padding: 7px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+  background: transparent; color: rgba(200,215,245,0.6); font-size: 13px; font-weight: 600;
+  cursor: pointer; font-family: inherit; transition: all 0.18s; white-space: nowrap;
+}
+.db-period-btn:hover { background: rgba(255,255,255,0.07); color: #f4f6fc; }
+.db-period-btn.active { background: rgba(196,160,18,0.15); color: #c8a84b; border-color: rgba(196,160,18,0.4); }
+.db-custom-range {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  padding: 10px 0 4px;
+}
+.db-custom-range label { font-size: 13px; color: rgba(200,215,245,0.6); font-weight: 600; }
+.db-custom-range input[type="date"] {
+  padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05); color: #f4f6fc; font-size: 13px; font-family: inherit;
+}
+/* ── Dashboard — Alertas ── */
+.db-alertas-list { display: flex; flex-direction: column; gap: 10px; }
+.db-alerta-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 16px;
+  border-radius: 12px; border-left: 4px solid; font-size: 14px;
+}
+.db-alerta-icon { font-size: 18px; flex-shrink: 0; }
+.db-alerta-msg { color: #f4f6fc; line-height: 1.4; }
+.db-alerta-danger  { background: rgba(248,113,113,0.08); border-color: #f87171; }
+.db-alerta-warning { background: rgba(251,146,60,0.08);  border-color: #fb923c; }
+.db-alerta-info    { background: rgba(56,189,248,0.08);  border-color: #38bdf8; }
+/* ── KPI grid 6 cols ── */
+.db-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (min-width: 900px) { .db-kpi-grid { grid-template-columns: repeat(6, 1fr); } }
+@media (max-width: 600px) { .db-kpi-grid { grid-template-columns: repeat(2, 1fr); } }
