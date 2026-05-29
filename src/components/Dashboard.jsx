@@ -1164,12 +1164,6 @@ export default function Dashboard() {
 
       {loading ? (
         <div className="loading-state">Cargando dashboard...</div>
-      ) : !hasData && mode === 'real' ? (
-        <div className="db-empty">
-          <div className="db-empty-icon">📊</div>
-          <h3>Sin datos todavía</h3>
-          <p>Seguí registrando cosechas y ventas para ver el dashboard aquí.</p>
-        </div>
       ) : (
         <>
           {/* ── Section 1: KPIs ── */}
