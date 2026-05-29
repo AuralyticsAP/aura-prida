@@ -2962,3 +2962,93 @@ body {
   .reg-search-wrap  { min-width: 0; }
   .reg-summary-bar  { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── Devoluciones — badges tabla ── */
+.dev-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.dev-badge-si  { background: rgba(52,211,153,0.12); color: #34d399; }
+.dev-badge-no  { background: rgba(248,113,113,0.12); color: #f87171; }
+
+/* ── Devoluciones — total pérdida en tabla ── */
+.td-total-danger { color: #f87171 !important; }
+
+/* ── Devoluciones — total-preview rojo ── */
+.total-preview-danger {
+  background: rgba(248,113,113,0.07);
+  border-color: rgba(248,113,113,0.28);
+}
+.total-preview-danger strong { color: #f87171; }
+
+/* ── Dashboard — banner devoluciones ── */
+.db-dev-banner {
+  background: rgba(56,189,248,0.06);
+  border: 1.5px solid rgba(56,189,248,0.28);
+  border-radius: 20px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.db-dev-pulse {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 0 0 rgba(56,189,248,0.6);
+  animation: pulse-blue 1.8s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-blue {
+  0%   { box-shadow: 0 0 0 0 rgba(56,189,248,0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(56,189,248,0); }
+  100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); }
+}
+
+.db-dev-metrics {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.db-dev-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px 18px;
+  min-width: 160px;
+}
+
+.db-dev-metric-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(200,215,245,0.55);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.db-dev-metric-value {
+  font-size: 20px;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.db-dev-metric-danger .db-dev-metric-value { color: #f87171; }
+.db-dev-metric-ok    .db-dev-metric-value  { color: #34d399; }
+
+/* ── chips extra de historial ── */
+.reg-chip-green {
+  background: rgba(52,211,153,0.12);
+  color: #34d399;
+  border: 1px solid rgba(52,211,153,0.25);
+}

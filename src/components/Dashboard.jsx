@@ -125,6 +125,7 @@ const DEMO_MERMAS_SUMMARY = [
   { producto: 'Zucchini', cantidad: 85 },
   { producto: 'Tomate',   cantidad: 30 },
 ]
+const DEMO_DEVOLUCIONES = { count: 5, perdida: 45000, reingreso: 18000 }
 
 const DEMO_RENT = [
   {
@@ -286,6 +287,16 @@ function buildClientePerfiles(ventas) {
       return { cliente: c.cliente, productos: prods, favorito, totalKg, totalIngresos: Math.round(c.totalIngresos), ultimaCompra: c.ultimaCompra }
     })
     .sort((a, b) => b.totalIngresos - a.totalIngresos)
+}
+
+function buildDevolucionesSummary(devoluciones) {
+  return devoluciones.reduce((acc, r) => {
+    acc.count++
+    const total = parseFloat(r.total || 0)
+    if (r.puede_revenderse) acc.reingreso += total
+    else acc.perdida += total
+    return acc
+  }, { count: 0, perdida: 0, reingreso: 0 })
 }
 
 function buildMermasSummary(mermas) {
@@ -671,7 +682,8 @@ export default function Dashboard() {
   const [rentData, setRentData]       = useState([])
   const [perfiles, setPerfiles]       = useState([])
   const [hasData, setHasData]         = useState(false)
-  const [mermasSummary, setMermasSummary] = useState([])
+  const [mermasSummary, setMermasSummary]           = useState([])
+  const [devolucionesSummary, setDevolucionesSummary] = useState({ count: 0, perdida: 0, reingreso: 0 })
 
   useEffect(() => {
     supabase.from('fincas').select('id,nombre').eq('activo', true).order('id').then(({ data }) => {
@@ -693,7 +705,7 @@ export default function Dashboard() {
 
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
-      { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m },
+      { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m }, { data: dev },
     ] = await Promise.all([
       applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
@@ -703,9 +715,10 @@ export default function Dashboard() {
       supabase.from('proveedor_productos').select('nombre,precio,proveedor_id'),
       supabase.from('proveedores').select('id,nombre').eq('estado','activo'),
       applyFinca(supabase.from('mermas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('devoluciones').select('total,puede_revenderse').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
     ])
 
-    const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || [], merArr = m || []
+    const cosArr = c || [], venArr = v || [], cosW2 = cW || [], venW2 = vW || [], merArr = m || [], devArr = dev || []
     const totalIngresos = venArr.reduce((s, r) => s + parseFloat(r.total || 0), 0)
 
     // Build proveedor id→nombre map
@@ -719,6 +732,7 @@ export default function Dashboard() {
     setClientData(buildClienteData(venW2))
     setStarProduct(buildStarProduct(venArr))
     setMermasSummary(buildMermasSummary(merArr))
+    setDevolucionesSummary(buildDevolucionesSummary(devArr))
     setLossAlerts(buildLossAlerts(cosArr, venArr, merArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setPerfiles(buildClientePerfiles(venW2))
@@ -737,6 +751,7 @@ export default function Dashboard() {
       setClientData(DEMO_CLIENTES)
       setStarProduct(DEMO_STAR)
       setMermasSummary(DEMO_MERMAS_SUMMARY)
+      setDevolucionesSummary(DEMO_DEVOLUCIONES)
       setLossAlerts(DEMO_LOSSES)
       setRentData(DEMO_RENT)
       setPerfiles(DEMO_PERFILES)
@@ -823,6 +838,34 @@ export default function Dashboard() {
                     <span className="db-mermas-kg">{a.cantidad.toLocaleString('es-CR')} kg registrados como pérdida</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Devoluciones del mes ── */}
+          {devolucionesSummary.count > 0 && (
+            <div className="db-dev-banner">
+              <div className="db-mermas-banner-head">
+                <span className="db-dev-pulse" />
+                <span className="db-mermas-banner-title">↩️ Devoluciones registradas este mes</span>
+              </div>
+              <div className="db-dev-metrics">
+                <div className="db-dev-metric">
+                  <span className="db-dev-metric-label">Total devoluciones</span>
+                  <span className="db-dev-metric-value">{devolucionesSummary.count}</span>
+                </div>
+                {devolucionesSummary.perdida > 0 && (
+                  <div className="db-dev-metric db-dev-metric-danger">
+                    <span className="db-dev-metric-label">❌ Pérdida neta</span>
+                    <span className="db-dev-metric-value">₡{Math.round(devolucionesSummary.perdida).toLocaleString('es-CR')}</span>
+                  </div>
+                )}
+                {devolucionesSummary.reingreso > 0 && (
+                  <div className="db-dev-metric db-dev-metric-ok">
+                    <span className="db-dev-metric-label">✅ Reingresado al inventario</span>
+                    <span className="db-dev-metric-value">₡{Math.round(devolucionesSummary.reingreso).toLocaleString('es-CR')}</span>
+                  </div>
+                )}
               </div>
             </div>
           )}
