@@ -55,6 +55,7 @@ export default function App() {
   const [toast, setToast] = useState(null)
 
   const signOutExplicit = useRef(false)
+  const tabNavRef = useRef(null)
 
   const handleSignOut = useCallback(() => {
     signOutExplicit.current = true
@@ -263,7 +264,8 @@ export default function App() {
       </div>
 
       <div className="tab-nav-wrap">
-        <nav className="tab-nav">
+        <button className="tab-nav-arrow" onClick={() => tabNavRef.current?.scrollBy({ left: -180, behavior: 'smooth' })}>‹</button>
+        <nav className="tab-nav" ref={tabNavRef}>
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -275,6 +277,7 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <button className="tab-nav-arrow" onClick={() => tabNavRef.current?.scrollBy({ left: 180, behavior: 'smooth' })}>›</button>
       </div>
 
       <main className="app-main">

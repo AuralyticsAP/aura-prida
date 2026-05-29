@@ -1509,24 +1509,39 @@ body {
 }
 .tab-nav::-webkit-scrollbar { display: none; }
 
-/* wrapper que envuelve el nav para el fade derecho */
+/* wrapper con flechas de scroll */
 .tab-nav-wrap {
   position: sticky;
   top: 70px;
   z-index: 99;
   margin: 14px 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
-.tab-nav-wrap::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 48px;
-  height: 100%;
-  border-radius: 0 16px 16px 0;
-  background: linear-gradient(to right, transparent, rgba(8,16,36,0.85));
-  pointer-events: none;
-  z-index: 1;
+
+.tab-nav-arrow {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.18s;
+  padding: 0;
+  font-family: inherit;
+}
+.tab-nav-arrow:hover {
+  background: rgba(196,160,18,0.15);
+  color: var(--gold-bright);
+  border-color: rgba(196,160,18,0.35);
 }
 
 /* ===== GESTIÓN DE PRODUCTOS ===== */
