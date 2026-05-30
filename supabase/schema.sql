@@ -276,3 +276,35 @@ CREATE POLICY "provprod_delete" ON proveedor_productos FOR DELETE TO authenticat
 -- Migración: costo de producción por producto
 -- =============================================
 ALTER TABLE productos ADD COLUMN IF NOT EXISTS costo_produccion NUMERIC(10,2);
+
+-- =============================================
+-- Migración: sistema de estados de pago en compras
+-- Ejecutar en Supabase SQL Editor
+-- =============================================
+
+-- Nuevas columnas en compras
+ALTER TABLE compras
+  ADD COLUMN IF NOT EXISTS estado_pago       TEXT NOT NULL DEFAULT 'pendiente'
+    CHECK (estado_pago IN ('pendiente', 'parcial', 'pagado')),
+  ADD COLUMN IF NOT EXISTS fecha_vencimiento DATE;
+
+CREATE INDEX IF NOT EXISTS idx_compras_estado_pago ON compras(estado_pago);
+CREATE INDEX IF NOT EXISTS idx_compras_vencimiento ON compras(fecha_vencimiento) WHERE fecha_vencimiento IS NOT NULL;
+
+-- Tabla de abonos parciales
+CREATE TABLE IF NOT EXISTS abonos_compras (
+  id         UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  compra_id  UUID NOT NULL REFERENCES compras(id) ON DELETE CASCADE,
+  monto      NUMERIC(10,2) NOT NULL CHECK (monto > 0),
+  fecha      DATE NOT NULL DEFAULT CURRENT_DATE,
+  notas      TEXT,
+  user_id    UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_abonos_compra ON abonos_compras(compra_id);
+
+ALTER TABLE abonos_compras ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "abonos_select" ON abonos_compras FOR SELECT TO authenticated USING (true);
+CREATE POLICY "abonos_insert" ON abonos_compras FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "abonos_delete" ON abonos_compras FOR DELETE TO authenticated USING (auth.uid() = user_id);

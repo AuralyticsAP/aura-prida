@@ -3388,3 +3388,194 @@ body {
   font-size: 13px;
   font-family: inherit;
 }
+
+/* ===== ESTADOS DE PAGO — BADGES ===== */
+.pago-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pago-pendiente { background: rgba(248,113,113,0.18); color: #f87171; border: 1px solid rgba(248,113,113,0.35); }
+.pago-parcial   { background: rgba(251,191,36,0.18);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.35); }
+.pago-pagado    { background: rgba(52,211,153,0.18);  color: #34d399; border: 1px solid rgba(52,211,153,0.35); }
+
+.td-pago { vertical-align: middle; white-space: nowrap; }
+.td-saldo {
+  display: block;
+  font-size: 11px;
+  color: #f87171;
+  margin-top: 3px;
+  font-weight: 600;
+}
+.td-vencimiento {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.td-vencimiento.vencida { color: #f87171; font-weight: 600; }
+
+/* Chip de saldo pendiente en summary bar */
+.reg-chip-orange {
+  background: rgba(251,146,60,0.15);
+  color: #fb923c;
+  border: 1px solid rgba(251,146,60,0.3);
+}
+
+/* Botón acción pago */
+.btn-action-pay {
+  background: none; border: none; cursor: pointer;
+  font-size: 16px; padding: 4px 6px; border-radius: 6px;
+  transition: background 0.15s;
+  line-height: 1;
+}
+.btn-action-pay:hover { background: rgba(255,255,255,0.1); }
+
+/* Checkbox en formulario */
+.form-group-checkbox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 11px 0;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.checkbox-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ===== ABONO MODAL ===== */
+.abono-modal {
+  max-width: 540px;
+  width: 92vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.abono-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.abono-modal-header h3 {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+}
+.modal-close-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 18px; padding: 4px 8px;
+  border-radius: 6px; transition: background 0.15s, color 0.15s;
+}
+.modal-close-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+.abono-compra-info {
+  padding: 16px 24px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+.abono-compra-name {
+  font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 2px;
+}
+.abono-compra-prov {
+  font-size: 12px; color: var(--text-muted); margin: 0 0 12px;
+}
+.abono-totals-row {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.abono-total-item {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.abono-total-item span  { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.abono-total-item strong { font-size: 15px; font-weight: 800; color: var(--text-primary); }
+.abono-item-green strong { color: #34d399; }
+.abono-item-red   strong { color: #f87171; }
+
+.abono-list {
+  padding: 16px 24px 0;
+}
+.abono-list-title {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 10px;
+}
+.abono-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px; border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  margin-bottom: 6px;
+}
+.abono-fecha  { font-size: 12px; color: var(--text-muted); flex: 0 0 auto; }
+.abono-monto  { font-size: 14px; font-weight: 700; color: #34d399; flex: 0 0 auto; }
+.abono-notas  { font-size: 12px; color: var(--text-secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.abono-del-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); font-size: 13px; padding: 2px 6px;
+  border-radius: 4px; transition: background 0.15s, color 0.15s; margin-left: auto;
+}
+.abono-del-btn:hover { background: rgba(248,113,113,0.15); color: #f87171; }
+
+.abono-form {
+  padding: 16px 24px 20px;
+  display: flex; flex-direction: column; gap: 0;
+}
+.abono-form-title {
+  font-size: 11px; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px;
+}
+.abono-pagado-msg {
+  margin: 16px 24px 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: rgba(52,211,153,0.1);
+  border: 1px solid rgba(52,211,153,0.25);
+  color: #34d399;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ===== DASHBOARD — CUENTAS POR PAGAR ===== */
+.db-cxp-banner {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 20px;
+  background: rgba(248,113,113,0.07);
+  border: 1px solid rgba(248,113,113,0.2);
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+.db-cxp-item {
+  display: flex; align-items: center; gap: 12px; flex: 1; min-width: 140px;
+}
+.db-cxp-item.db-cxp-vencidas { color: #f87171; }
+.db-cxp-icon { font-size: 22px; flex-shrink: 0; }
+.db-cxp-label { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+.db-cxp-value { font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0; }
+.db-cxp-vencidas .db-cxp-value { color: #f87171; }

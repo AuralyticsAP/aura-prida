@@ -223,7 +223,10 @@ const DEMO_PERFILES = [
 const DEMO_ALERTAS = [
   { tipo: 'warning', icon: '📦', msg: 'Zucchini: 35 kg sin destino registrado (13% de lo cosechado)' },
   { tipo: 'info',    icon: '👥', msg: 'Frumusa no ha comprado en los últimos 14 días' },
+  { tipo: 'danger',  icon: '💳', msg: '2 facturas de compras vencidas sin pagar' },
 ]
+
+const DEMO_CUENTAS_PAGAR = { total: 185000, count: 6, vencidas: 2 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 // Use LOCAL date to avoid UTC offset shifting the day in Costa Rica (UTC-6)
@@ -605,7 +608,22 @@ function buildPersonalSummary(personal) {
   return { totalPersonaDia, promedioDia, byLabor, byFinca, topDia }
 }
 
-function buildAlertas(cosArr, venW2, merArr, devArr) {
+function buildCuentasPorPagar(compras) {
+  const hoy = isoDate(new Date())
+  let total = 0, count = 0, vencidas = 0
+  compras.forEach(c => {
+    const abonado = (c.abonos_compras || []).reduce((s, a) => s + parseFloat(a.monto || 0), 0)
+    const saldo   = parseFloat(c.total || 0) - abonado
+    if (saldo > 0.01) {
+      total += saldo
+      count++
+      if (c.fecha_vencimiento && c.fecha_vencimiento < hoy) vencidas++
+    }
+  })
+  return { total: Math.round(total), count, vencidas }
+}
+
+function buildAlertas(cosArr, venW2, merArr, devArr, pendingCompras = []) {
   const alertas = []
   // Mermas > 10%
   const totalCos = cosArr.reduce((s, r) => s + parseFloat(r.cantidad || 0), 0)
@@ -634,6 +652,13 @@ function buildAlertas(cosArr, venW2, merArr, devArr) {
   Object.entries(devMap).forEach(([c, n]) => {
     if (n >= 2) alertas.push({ tipo: 'warning', icon: '↩️', msg: `${c} tiene ${n} devoluciones sin reingreso en el período` })
   })
+  // Facturas de compras vencidas
+  const hoy = isoDate(new Date())
+  const vencidasList = pendingCompras.filter(c => c.fecha_vencimiento && c.fecha_vencimiento < hoy)
+  if (vencidasList.length === 1)
+    alertas.push({ tipo: 'danger', icon: '💳', msg: 'Hay 1 factura de compra vencida sin pagar' })
+  else if (vencidasList.length > 1)
+    alertas.push({ tipo: 'danger', icon: '💳', msg: `Hay ${vencidasList.length} facturas de compras vencidas sin pagar` })
   return alertas.slice(0, 8)
 }
 
@@ -948,7 +973,8 @@ export default function Dashboard() {
   const [gastosMensual, setGastosMensual]         = useState([])
 
   // Compras
-  const [comprasSummary, setComprasSummary] = useState({ total: 0, count: 0, topProveedor: null, topProducto: null, byFinca: [] })
+  const [comprasSummary, setComprasSummary]   = useState({ total: 0, count: 0, topProveedor: null, topProducto: null, byFinca: [] })
+  const [cuentasPorPagar, setCuentasPorPagar] = useState({ total: 0, count: 0, vencidas: 0 })
 
   // Personal
   const [personalSummary, setPersonalSummary] = useState({ totalPersonaDia: 0, promedioDia: 0, byLabor: [], byFinca: [], topDia: null })
@@ -979,7 +1005,7 @@ export default function Dashboard() {
     const [
       { data: c }, { data: v }, { data: cW }, { data: vW },
       { data: prodsCost }, { data: ppData }, { data: provsActive }, { data: m }, { data: dev },
-      { data: g }, { data: gHist }, { data: comp }, { data: pers },
+      { data: g }, { data: gHist }, { data: comp }, { data: pers }, { data: pendComp },
     ] = await Promise.all([
       applyFinca(supabase.from('cosechas').select('cantidad,producto').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('ventas').select('total,cantidad,producto,nombre_cliente,precio_unitario,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
@@ -994,6 +1020,7 @@ export default function Dashboard() {
       applyFinca(supabase.from('gastos').select('monto,fecha').eq('estado','activo').gte('fecha',from4M).lte('fecha',to)),
       applyFinca(supabase.from('compras').select('total,producto,proveedor_id,finca_id,fincas(nombre),proveedores(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
       applyFinca(supabase.from('personal_diario').select('cantidad_personas,tipo_labor,fecha,finca_id,fincas(nombre)').eq('estado','activo').gte('fecha',from).lte('fecha',to)),
+      applyFinca(supabase.from('compras').select('total,estado_pago,fecha_vencimiento,abonos_compras(monto)').eq('estado','activo').neq('estado_pago','pagado')),
     ])
 
     const cosArr   = c    || []
@@ -1041,7 +1068,9 @@ export default function Dashboard() {
     setPersonalSummary(buildPersonalSummary(persArr))
     setRentData(buildRentabilidad(prodsCost || [], ppData || [], provMap, venArr))
     setPerfiles(buildClientePerfiles(venW2))
-    setAlertas(buildAlertas(cosArr, venW2, merArr, devArr))
+    const pendCompArr = pendComp || []
+    setCuentasPorPagar(buildCuentasPorPagar(pendCompArr))
+    setAlertas(buildAlertas(cosArr, venW2, merArr, devArr, pendCompArr))
     setHasData(cosArr.length > 0 || venArr.length > 0)
     setLoading(false)
   } catch (err) {
@@ -1086,6 +1115,7 @@ export default function Dashboard() {
       setPersonalSummary(DEMO_PERSONAL)
       setRentData(DEMO_RENT)
       setPerfiles(DEMO_PERFILES)
+      setCuentasPorPagar(DEMO_CUENTAS_PAGAR)
       setAlertas(DEMO_ALERTAS)
       setHasData(true)
       setLoading(false)
@@ -1194,6 +1224,35 @@ export default function Dashboard() {
             <KpiCard icon="🏦" label="Ganancia neta"         value={kpi.gananciaNeta}    accent={kpi.gananciaNeta >= 0 ? GREEN_VAL : '#f87171'} isCurrency />
             <KpiCard icon="👷" label="Personal prom./día"    value={kpi.personalPromedio} accent="#c084fc" />
           </div>
+
+          {/* ── Cuentas por pagar ── */}
+          {(cuentasPorPagar.count > 0 || mode === 'demo') && (
+            <div className="db-cxp-banner">
+              <div className="db-cxp-item">
+                <span className="db-cxp-icon">💳</span>
+                <div>
+                  <p className="db-cxp-label">Cuentas por pagar</p>
+                  <p className="db-cxp-value">₡{cuentasPorPagar.total.toLocaleString('es-CR')}</p>
+                </div>
+              </div>
+              <div className="db-cxp-item">
+                <span className="db-cxp-icon">🧾</span>
+                <div>
+                  <p className="db-cxp-label">Facturas pendientes</p>
+                  <p className="db-cxp-value">{cuentasPorPagar.count}</p>
+                </div>
+              </div>
+              {cuentasPorPagar.vencidas > 0 && (
+                <div className="db-cxp-item db-cxp-vencidas">
+                  <span className="db-cxp-icon">⚠️</span>
+                  <div>
+                    <p className="db-cxp-label">Facturas vencidas</p>
+                    <p className="db-cxp-value">{cuentasPorPagar.vencidas}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* ── Section 2: Ventas ── */}
           <SectionHeader icon="📊" title="Ventas" sub="Análisis de ingresos" />

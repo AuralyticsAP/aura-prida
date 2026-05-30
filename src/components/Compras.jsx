@@ -2,20 +2,23 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { UNIDADES_COMPRAS } from '../lib/constants'
 import ConfirmModal from './ConfirmModal'
+import AbonoPagoModal from './AbonoPagoModal'
 import { exportToCSV, formatDateForFilename } from '../lib/csv'
 import DateInput from './DateInput'
 
 const today = new Date().toISOString().split('T')[0]
 
 const INIT_FORM = {
-  finca_id:        '',
-  proveedor_id:    '',
-  producto:        '',
-  cantidad:        '',
-  unidad:          'kg',
-  precio_unitario: '',
-  fecha:           today,
-  notas:           '',
+  finca_id:          '',
+  proveedor_id:      '',
+  producto:          '',
+  cantidad:          '',
+  unidad:            'kg',
+  precio_unitario:   '',
+  fecha:             today,
+  fecha_vencimiento: '',
+  notas:             '',
+  pago_inmediato:    false,
 }
 
 const PERIODOS = [
@@ -25,6 +28,24 @@ const PERIODOS = [
   { id: '30dias', label: '30 días'},
   { id: 'custom', label: 'Personalizado' },
 ]
+
+const PAGO_ESTADOS = [
+  { id: null,        label: 'Todos'     },
+  { id: 'pendiente', label: 'Pendiente' },
+  { id: 'parcial',   label: 'Parcial'   },
+  { id: 'pagado',    label: 'Pagado'    },
+]
+
+const PAGO_BADGE_CFG = {
+  pendiente: { label: 'Pendiente', cls: 'pago-badge pago-pendiente' },
+  parcial:   { label: 'Parcial',   cls: 'pago-badge pago-parcial'   },
+  pagado:    { label: 'Pagado',    cls: 'pago-badge pago-pagado'     },
+}
+
+function PagoBadge({ estado }) {
+  const cfg = PAGO_BADGE_CFG[estado] || PAGO_BADGE_CFG.pendiente
+  return <span className={cfg.cls}>{cfg.label}</span>
+}
 
 function toISO(d) { return d.toISOString().split('T')[0] }
 
@@ -61,6 +82,11 @@ function rangeLabel(from, to) {
   return `${f.toLocaleDateString('es-CR', opts)} — ${t.toLocaleDateString('es-CR', { ...opts, year: 'numeric' })}`
 }
 
+function getSaldo(r) {
+  const abonado = (r.abonos_compras || []).reduce((s, a) => s + parseFloat(a.monto || 0), 0)
+  return Math.max(0, parseFloat(r.total || 0) - abonado)
+}
+
 export default function Compras({ fincas = [], session, canWrite, canArchive, canDelete, showToast }) {
   const [view, setView] = useState(canWrite ? 'form' : 'historial')
 
@@ -84,6 +110,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
   const [desde, setDesde]             = useState('')
   const [hasta, setHasta]             = useState('')
   const [fincaFilt, setFincaFilt]     = useState(null)
+  const [pagFilt, setPagFilt]         = useState(null)
 
   const [showArchivados, setShowArchivados] = useState(false)
   const [archCompras, setArchCompras]       = useState([])
@@ -91,6 +118,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
 
   const [confirmDel, setConfirmDel]         = useState(null)
   const [archConfirmDel, setArchConfirmDel] = useState(null)
+  const [abonoTarget, setAbonoTarget]       = useState(null)
 
   // ── Fetch historial ───────────────────────────────────────────────────────
   const fetchData = useCallback(async () => {
@@ -98,7 +126,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
     const { from, to } = getRange(periodo, desde, hasta)
     let q = supabase
       .from('compras')
-      .select('*, fincas(nombre), proveedores(nombre)')
+      .select('*, fincas(nombre), proveedores(nombre), abonos_compras(id, monto)')
       .eq('estado', 'activo')
       .gte('fecha', from).lte('fecha', to)
       .order('fecha', { ascending: false })
@@ -126,7 +154,8 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
 
   // ── Handlers form ─────────────────────────────────────────────────────────
   const handleChange = e => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value, type, checked } = e.target
+    setForm(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
     setFormError(null)
   }
 
@@ -143,22 +172,36 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
     setFormLoading(true)
     setFormError(null)
 
-    const { error: dbError } = await supabase.from('compras').insert([{
-      finca_id:        parseInt(form.finca_id),
-      proveedor_id:    form.proveedor_id || null,
-      producto:        form.producto,
-      cantidad:        parseFloat(form.cantidad),
-      unidad:          form.unidad,
-      precio_unitario: parseFloat(form.precio_unitario),
-      total:           parseFloat(totalPreview),
-      fecha:           form.fecha,
-      notas:           form.notas || null,
-      user_id:         session.user.id,
-    }])
+    const { data: newCompra, error: dbError } = await supabase.from('compras').insert([{
+      finca_id:          parseInt(form.finca_id),
+      proveedor_id:      form.proveedor_id || null,
+      producto:          form.producto,
+      cantidad:          parseFloat(form.cantidad),
+      unidad:            form.unidad,
+      precio_unitario:   parseFloat(form.precio_unitario),
+      total:             parseFloat(totalPreview),
+      fecha:             form.fecha,
+      fecha_vencimiento: form.fecha_vencimiento || null,
+      notas:             form.notas || null,
+      estado_pago:       'pendiente',
+      user_id:           session.user.id,
+    }]).select('id').single()
+
+    if (dbError) { setFormLoading(false); setFormError('Error al guardar: ' + dbError.message); return }
+
+    // Si se pagó al momento, registrar abono completo
+    if (form.pago_inmediato && newCompra?.id) {
+      await supabase.from('abonos_compras').insert([{
+        compra_id: newCompra.id,
+        monto:     parseFloat(totalPreview),
+        fecha:     form.fecha,
+        notas:     'Pago al momento',
+        user_id:   session.user.id,
+      }])
+      await supabase.from('compras').update({ estado_pago: 'pagado' }).eq('id', newCompra.id)
+    }
 
     setFormLoading(false)
-    if (dbError) { setFormError('Error al guardar: ' + dbError.message); return }
-
     setForm(INIT_FORM)
     showToast?.('✅ Compra registrada correctamente')
     setView('historial')
@@ -190,20 +233,28 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
 
   const exportCompras = () => {
     const data = compras.map(r => ({
-      Fecha:             r.fecha,
-      Finca:             r.fincas?.nombre || '',
-      Proveedor:         r.proveedores?.nombre || '',
-      Producto:          r.producto,
-      Cantidad:          r.cantidad,
-      Unidad:            r.unidad,
-      'Precio Unitario': r.precio_unitario,
-      Total:             r.total,
-      Notas:             r.notas || '',
+      Fecha:              r.fecha,
+      'Fecha Vencimiento': r.fecha_vencimiento || '',
+      Finca:              r.fincas?.nombre || '',
+      Proveedor:          r.proveedores?.nombre || '',
+      Producto:           r.producto,
+      Cantidad:           r.cantidad,
+      Unidad:             r.unidad,
+      'Precio Unitario':  r.precio_unitario,
+      Total:              r.total,
+      'Estado de Pago':   r.estado_pago || 'pendiente',
+      'Saldo Pendiente':  getSaldo(r),
+      Notas:              r.notas || '',
     }))
     exportToCSV(data, `compras_${formatDateForFilename(new Date())}.csv`)
   }
 
-  const totalGasto = compras.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+  // ── Derivados ─────────────────────────────────────────────────────────────
+  const comprasFiltradas = pagFilt ? compras.filter(r => r.estado_pago === pagFilt) : compras
+  const totalGasto       = comprasFiltradas.reduce((s, r) => s + parseFloat(r.total || 0), 0)
+  const totalPendiente   = comprasFiltradas
+    .filter(r => (r.estado_pago || 'pendiente') !== 'pagado')
+    .reduce((s, r) => s + getSaldo(r), 0)
   const { from, to } = getRange(periodo, desde, hasta)
 
   return (
@@ -325,6 +376,25 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
               </div>
             )}
 
+            <div className="form-row">
+              <div className="form-group">
+                <label>Fecha de vencimiento</label>
+                <DateInput name="fecha_vencimiento" value={form.fecha_vencimiento} onChange={handleChange} />
+              </div>
+              <div className="form-group form-group-checkbox">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    name="pago_inmediato"
+                    checked={form.pago_inmediato}
+                    onChange={handleChange}
+                  />
+                  <span>Pagado al momento</span>
+                </label>
+                <p className="checkbox-hint">El pago se registrará automáticamente</p>
+              </div>
+            </div>
+
             <div className="form-group">
               <label>Notas</label>
               <textarea
@@ -395,6 +465,22 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
                 ))}
               </div>
             </div>
+
+            {/* Filtro por estado de pago */}
+            <div className="db-finca-bar" style={{ paddingTop: 6, paddingBottom: 0 }}>
+              <span className="db-finca-label">Pago:</span>
+              <div className="db-finca-pills">
+                {PAGO_ESTADOS.map(p => (
+                  <button
+                    key={String(p.id)}
+                    className={`db-finca-pill ${pagFilt === p.id ? 'active' : ''}`}
+                    onClick={() => setPagFilt(p.id)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Resumen */}
@@ -402,11 +488,16 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
             <span className="reg-range-label">{rangeLabel(from, to)}</span>
             <div className="reg-chips">
               <span className="reg-chip reg-chip-blue">
-                🛒 {compras.length} compra{compras.length !== 1 ? 's' : ''}
+                🛒 {comprasFiltradas.length} compra{comprasFiltradas.length !== 1 ? 's' : ''}
               </span>
               {totalGasto > 0 && (
                 <span className="reg-chip reg-chip-red">
                   💸 ₡{totalGasto.toLocaleString('es-CR')}
+                </span>
+              )}
+              {totalPendiente > 0 && (
+                <span className="reg-chip reg-chip-orange">
+                  ⏳ Por pagar: ₡{Math.round(totalPendiente).toLocaleString('es-CR')}
                 </span>
               )}
             </div>
@@ -417,16 +508,16 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
             <div className="registros-header">
               <div className="registros-header-left">
                 <span className="card-icon">🛒</span>
-                <h3>Compras ({compras.length})</h3>
+                <h3>Compras ({comprasFiltradas.length})</h3>
               </div>
-              {compras.length > 0 && (
+              {comprasFiltradas.length > 0 && (
                 <button className="btn-export" onClick={exportCompras}>↓ CSV</button>
               )}
             </div>
 
             {histLoading ? (
               <div className="loading-state">Cargando...</div>
-            ) : compras.length === 0 ? (
+            ) : comprasFiltradas.length === 0 ? (
               <p className="empty-state">No hay compras en este período.</p>
             ) : (
               <div className="table-wrapper">
@@ -441,43 +532,65 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
                       <th>Unidad</th>
                       <th>Precio</th>
                       <th>Total</th>
+                      <th>Pago</th>
                       <th>Hora</th>
-                      {(canArchive || canDelete) && <th></th>}
+                      {(canArchive || canDelete || canWrite) && <th></th>}
                     </tr>
                   </thead>
                   <tbody>
-                    {compras.map(r => (
-                      <tr key={r.id}>
-                        <td className="td-hora reg-td-fecha">{fmtFecha(r.fecha)}</td>
-                        <td className="td-producto">{r.fincas?.nombre || '—'}</td>
-                        <td className="td-producto">{r.proveedores?.nombre || '—'}</td>
-                        <td className="td-producto">{r.producto}</td>
-                        <td className="td-number">{r.cantidad}</td>
-                        <td>{r.unidad}</td>
-                        <td className="td-number">₡{parseFloat(r.precio_unitario).toLocaleString('es-CR')}</td>
-                        <td className="td-total">₡{parseFloat(r.total).toLocaleString('es-CR')}</td>
-                        <td className="td-hora">{fmtHora(r.created_at)}</td>
-                        {(canArchive || canDelete) && (
-                          <td className="td-actions">
-                            {canArchive && (
-                              <button className="btn-action-archive" title="Archivar"
-                                onClick={() => handleArchive(r.id)}>🗃️</button>
-                            )}
-                            {canDelete && (
-                              <button className="btn-action-delete" title="Eliminar"
-                                onClick={() => setConfirmDel({ id: r.id, label: r.producto })}>🗑️</button>
+                    {comprasFiltradas.map(r => {
+                      const saldo      = getSaldo(r)
+                      const estadoPago = r.estado_pago || 'pendiente'
+                      return (
+                        <tr key={r.id}>
+                          <td className="td-hora reg-td-fecha">
+                            {fmtFecha(r.fecha)}
+                            {r.fecha_vencimiento && (
+                              <span className={`td-vencimiento ${r.fecha_vencimiento < today && estadoPago !== 'pagado' ? 'vencida' : ''}`}>
+                                vence {fmtFecha(r.fecha_vencimiento)}
+                              </span>
                             )}
                           </td>
-                        )}
-                      </tr>
-                    ))}
+                          <td className="td-producto">{r.fincas?.nombre || '—'}</td>
+                          <td className="td-producto">{r.proveedores?.nombre || '—'}</td>
+                          <td className="td-producto">{r.producto}</td>
+                          <td className="td-number">{r.cantidad}</td>
+                          <td>{r.unidad}</td>
+                          <td className="td-number">₡{parseFloat(r.precio_unitario).toLocaleString('es-CR')}</td>
+                          <td className="td-total">₡{parseFloat(r.total).toLocaleString('es-CR')}</td>
+                          <td className="td-pago">
+                            <PagoBadge estado={estadoPago} />
+                            {estadoPago !== 'pagado' && saldo > 0 && (
+                              <span className="td-saldo">₡{Math.round(saldo).toLocaleString('es-CR')}</span>
+                            )}
+                          </td>
+                          <td className="td-hora">{fmtHora(r.created_at)}</td>
+                          {(canArchive || canDelete || canWrite) && (
+                            <td className="td-actions">
+                              {canWrite && (
+                                <button className="btn-action-pay" title="Gestionar pagos"
+                                  onClick={() => setAbonoTarget(r)}>💳</button>
+                              )}
+                              {canArchive && (
+                                <button className="btn-action-archive" title="Archivar"
+                                  onClick={() => handleArchive(r.id)}>🗃️</button>
+                              )}
+                              {canDelete && (
+                                <button className="btn-action-delete" title="Eliminar"
+                                  onClick={() => setConfirmDel({ id: r.id, label: r.producto })}>🗑️</button>
+                              )}
+                            </td>
+                          )}
+                        </tr>
+                      )
+                    })}
                   </tbody>
                   <tfoot>
                     <tr>
                       <td colSpan={7} className="tf-label">Total del período:</td>
                       <td className="td-total tf-total">₡{totalGasto.toLocaleString('es-CR')}</td>
-                      <td></td>
-                      {(canArchive || canDelete) && <td></td>}
+                      <td colSpan={2}></td>
+                      {(canArchive || canDelete || canWrite) && <td></td>}
                     </tr>
                   </tfoot>
                 </table>
@@ -511,7 +624,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
                     <thead>
                       <tr>
                         <th>Fecha</th><th>Finca</th><th>Proveedor</th>
-                        <th>Producto</th><th>Total</th><th></th>
+                        <th>Producto</th><th>Total</th><th>Pago</th><th></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -522,6 +635,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
                           <td>{r.proveedores?.nombre || '—'}</td>
                           <td className="td-producto">{r.producto}</td>
                           <td className="td-total">₡{parseFloat(r.total).toLocaleString('es-CR')}</td>
+                          <td><PagoBadge estado={r.estado_pago || 'pendiente'} /></td>
                           {(canArchive || canDelete) && (
                             <td className="td-actions">
                               {canArchive && (
@@ -543,6 +657,17 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
             )}
           </div>
         </>
+      )}
+
+      {/* ── Modales ── */}
+      {abonoTarget && (
+        <AbonoPagoModal
+          compra={abonoTarget}
+          session={session}
+          canWrite={canWrite}
+          onClose={() => setAbonoTarget(null)}
+          onUpdated={() => { fetchData(); setAbonoTarget(null) }}
+        />
       )}
 
       {confirmDel && (
