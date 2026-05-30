@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { UNIDADES_COMPRAS } from '../lib/constants'
 import ConfirmModal from './ConfirmModal'
 import { exportToCSV, formatDateForFilename } from '../lib/csv'
+import DateInput from './DateInput'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -253,7 +254,7 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
               </div>
               <div className="form-group">
                 <label>Fecha *</label>
-                <input type="date" name="fecha" value={form.fecha} onChange={handleChange} required />
+                <DateInput name="fecha" value={form.fecha} onChange={handleChange} required />
               </div>
             </div>
 
@@ -365,11 +366,11 @@ export default function Compras({ fincas = [], session, canWrite, canArchive, ca
               <div className="reg-custom-range">
                 <div className="form-group">
                   <label>Desde</label>
-                  <input type="date" value={desde} onChange={e => setDesde(e.target.value)} />
+                  <DateInput value={desde} onChange={e => setDesde(e.target.value)} />
                 </div>
                 <div className="form-group">
                   <label>Hasta</label>
-                  <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} />
+                  <DateInput value={hasta} onChange={e => setHasta(e.target.value)} />
                 </div>
               </div>
             )}

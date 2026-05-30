@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { useCountUp } from '../hooks/useCountUp'
+import DateInput from './DateInput'
 
 const GOLD      = '#c8a84b'
 const GOLD_DIM  = 'rgba(200,168,75,0.18)'
@@ -1133,14 +1134,12 @@ export default function Dashboard() {
           {dbPeriodo === 'custom' && (
             <div className="db-custom-range">
               <label>Desde:</label>
-              <input
-                type="date"
+              <DateInput
                 value={customDesde}
                 onChange={e => setCustomDesde(e.target.value)}
               />
               <label>Hasta:</label>
-              <input
-                type="date"
+              <DateInput
                 value={customHasta}
                 onChange={e => setCustomHasta(e.target.value)}
               />

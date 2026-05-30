@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { exportToCSV, formatDateForFilename } from '../lib/csv'
 import ConfirmModal from './ConfirmModal'
+import DateInput from './DateInput'
 
 const PERIODOS = [
   { id: 'hoy',    label: 'Hoy' },
@@ -182,11 +183,11 @@ export default function Registros({ onRefresh, canArchive = false, canDelete = f
           <div className="reg-custom-range">
             <div className="form-group">
               <label>Desde</label>
-              <input type="date" value={desde} onChange={e => setDesde(e.target.value)} />
+              <DateInput value={desde} onChange={e => setDesde(e.target.value)} />
             </div>
             <div className="form-group">
               <label>Hasta</label>
-              <input type="date" value={hasta} onChange={e => setHasta(e.target.value)} />
+              <DateInput value={hasta} onChange={e => setHasta(e.target.value)} />
             </div>
           </div>
         )}
